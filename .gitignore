@@ -1,0 +1,14 @@
+*.slnx
+*.filters
+*.user
+*.vcxproj
+*.json
+*.command
+*.tlog
+*.idb
+*.obj
+*.log
+*.ilk
+*.recipe
+*.pdb
+*.exe
