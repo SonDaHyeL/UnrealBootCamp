@@ -9,11 +9,16 @@ Saved/
 .vs/
 .vscode/
 *.VC.db
+*.VC.opendb
 *.VC.VC.opendb
 *.sln
+*.slnx
 *.suo
 *.user
 *.userprefs
+*.vcxproj
+*.vcxproj.filters
+*.lastbuildstate
 
 # Rider
 .idea/
