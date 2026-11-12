@@ -27,12 +27,26 @@ int main() {
 	int c = a & b; //00000000 00000000 00000000 00000100 
 	printf("& 연산 결과 : %d\n\n", c);
 
-
 	a = 3;
 	b = 2;
 	x = (a != b && (a || b) > 2 ? 1 : 0);
 	printf("x = %d\n", x);
-	printf("%d", sizeof x);
-	return 0;
+	printf("%d\n\n", sizeof x);
+	
+	char ch1 = 'A';
+	printf("%%c : %c\t %%d : %d\n", ch1, ch1);
 
+	int sa = 0;
+	while (sa != 3) {
+		printf("1 혹은 2를 입력하세요 : ");
+		scanf_s("%d", &sa);
+		printf("숫자는 %d\n", sa);
+		if (sa == 1) printf("******몸통박치기!!!******\n");
+		else printf("효과는 미미했다...\n");
+	}
+
+	
+	
+
+	return 0;	
 }
