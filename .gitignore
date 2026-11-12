@@ -1,14 +1,51 @@
+# Unreal Engine - Generated Folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio
+.vs/
+.vscode/
+*.VC.db
+*.VC.opendb
+*.VC.VC.opendb
+*.sln
 *.slnx
-*.filters
+*.suo
 *.user
+*.userprefs
 *.vcxproj
+*.vcxproj.filters
+*.filters
+*.lastbuildstate
+
+# Rider
+.idea/
+
+# Build Files
+*.obj
+*.pdb
+*.ilk
+*.pch
+*.lib
+*.exp
+*.dll
+*.exe
+*.idb
+*.recipe
+*.tlog
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Unreal Engine Temporary Files
+*.tmp
+*.log
+*.bak
+
+# Other Generated Files
 *.json
 *.command
-*.tlog
-*.idb
-*.obj
-*.log
-*.ilk
-*.recipe
-*.pdb
-*.exe
