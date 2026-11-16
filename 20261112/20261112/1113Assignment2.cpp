@@ -1,4 +1,5 @@
-﻿#include <stdio.h>
+﻿//야구 게임 과제물
+#include <stdio.h>
 #include <iostream>
 #include <time.h>
 

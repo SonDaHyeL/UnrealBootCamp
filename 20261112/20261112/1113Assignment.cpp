@@ -1,4 +1,5 @@
-﻿#include <stdio.h>
+﻿//* 찍기 과제물
+#include <stdio.h>
 
 int main() {
 	int level = 0;

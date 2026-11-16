@@ -194,6 +194,7 @@ void Hunting(Player& player) {
 	case 4:
 		cout << ">> 모험을 종료합니다!\n";
 		return;
+		break;
 	default:
 		cout << "잘못된 입력입니다.\n";
 		break;
