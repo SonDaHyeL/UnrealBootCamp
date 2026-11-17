@@ -22,6 +22,7 @@ void main() {
 		}
 	}
 
+	int startTime = time(NULL);
 	printf("************야구 게임 시작!************\n");
 
 	while (success < 1) {
@@ -65,5 +66,7 @@ void main() {
 			success = 1;
 		}
 	}
-	printf("> 게임이 종료되었습니다.");
+
+	printf("> 게임이 종료되었습니다.\n");
+	printf("플레이 시간 : %d`s", (time(NULL)-startTime));
 }
