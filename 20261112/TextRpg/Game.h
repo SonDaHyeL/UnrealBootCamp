@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "Player.h"
+#include "Object.h"
 
 enum class Scene {
 	MENU,

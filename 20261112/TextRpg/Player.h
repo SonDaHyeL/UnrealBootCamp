@@ -1,6 +1,7 @@
 ﻿#ifndef PLAYER_H
 #define PLAYER_H
 
+#include "Object.h"
 #include <string>
 
 struct Player {
@@ -11,6 +12,8 @@ struct Player {
 	int defense = 0;
 	int hp = 0;
 	bool quest = false;
+
+	int inven[INVEN_SIZE] = { noItem };
 
 	void Init();
 	void ShowInfo();
