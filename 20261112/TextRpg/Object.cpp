@@ -113,7 +113,7 @@ int BuyItem(Player& player, ITEMLIST ItemID) { // -1 골드 부족 | 0 인벤토
 }
 
 int SellItem(Player& player, int idx) {
-	
+	idx -= 1;
 	if (idx < 0 || idx >= INVEN_SIZE || player.inven[idx].IsEmpty()) {
 		cout << " >> 해당 칸은 판매할 수 없습니다!\n";
 		return -1;

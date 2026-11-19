@@ -138,20 +138,108 @@ Scene Town(Player& player) {
 }
 
 Scene Store(Player& player) {
-	system("cls");
-	cout << "\n------------------------\n";
-	cout << "    :: 오늘은 영업 안함. ::    \n";
-	cout << "------------------------\n";
-	cout << "\n\n\n > 이런...\n";
-	system("pause");
-	return Scene::TOWN;
+	
 
-	//미 구현 내용
-	//상점 구매
-	//상점 판매
-	// int idx = SelectInvenSlot(player);
-	// if (idx != -1) SellItem(player, idx);
-	//나가기
+	while (1) {
+		system("cls");
+		cout << "\n------------------------\n";
+		cout << "       :: 상점 ::    \n";
+		cout << "------------------------\n";
+		cout << "오래된 목재로 지어진 작은 상점입니다.\n진열대에는 다양한 물건들이 가지런히 놓여 있습니다.\n\n";
+
+		cout << "'어서 오세요! 모험가님! 필요한 물건이라도 있으신가요?'\n\n";
+		cout << "------------------------\n";
+		cout << "1.아이템을 구매한다.\n";
+		cout << "2.아이템을 판매한다.\n";
+		cout << "3.상점을 나간다.\n";
+		switch (Select())
+		{
+		case 1:
+		{
+			bool shopping = true;
+			while (shopping) {
+				system("cls");
+				cout << "\n'늘 좋은 물건만 들여오고 있답니다!'\n";
+				cout << "---------------------\n";
+				cout << "      판매 목록\n";
+				cout << "---------------------\n";
+				cout << " :: 소지금 : " << player.gold << "G\n";
+				cout << "1.체력 포션(5G) : 별로 맛은 없다. ( HP +30 )\n";
+				cout << "2.나무 검(10G) : 어설프지만 튼튼하다! ( ATK +3 )\n";
+				cout << "3.나뭇잎 왕관(8G) : 나는 숲속의 왕이다. ( DEF +2 & MAX HP +10 )\n";
+				cout << "4.꽃 반지(6G) : 정성스레 엮었다. ( DEF +1 & MAX HP +30 )\n";
+				cout << "\n0.아무것도 사지 않는다.\n\n";
+				ITEMLIST buyID = noItem;
+				switch (Select())
+				{
+				case 1: buyID = heal_potion; break;
+				case 2: buyID = wooden_sword; break;
+				case 3: buyID = leaf_crown; break;
+				case 4: buyID = flower_ring; break;
+				case 0:
+					system("cls");
+					cout << "\n'에이, 조금만 더 보고 가시지!'\n\n";
+					system("pause");
+					shopping = false;
+					continue;
+				default:
+					cout << " (!) 잘못된 입력입니다.\n";
+					system("pause");
+					continue;
+				}
+
+				switch (BuyItem(player, buyID)) {
+				case 1:
+					cout << "'좋은 선택이에요! 다음에도 꼭 들러주세요!'\n";
+					break;
+				case 0:
+					cout << "'어라? 가방이 이미 꽉 찬 것 같은데요?'\n";
+					break;
+				case -1:
+					cout << "'어라? 돈이 부족하신 것 같은데요?'\n";
+					break;
+				}
+				system("pause");
+			}
+			break;
+		}
+			
+		case 2:
+		{
+			system("cls");
+			cout << "\n'오늘은 어떤 재밌는 걸 가져오셨나요?'\n";
+			cout << "---------------------\n";
+			cout << " :: 소지금 : " << player.gold << "G\n";
+			ShowInven(player);
+
+			cout << "\n0.아무것도팔지 않는다.\n\n";
+			cout << ">> 팔고 싶은 아이템을 선택해주세요!\n";
+
+			int input = Select();
+
+			if (input == 0) {
+				system("cls");
+				cout << "\n'에이, 좋게 잘 봐드릴 수 있는데요!'\n";
+			}
+			else {
+				SellItem(player, input);
+			}
+			system("pause");
+			break;
+		}
+			
+		case 3:
+			system("cls");
+			cout << "'안녕히가세요! 또 오시면 좋고요!'\n\n";
+			cout << ">> 당신은 거리로 돌아갑니다.\n";
+			system("pause");
+			return Scene::TOWN;
+		default:
+			cout << " (!) 잘못된 입력입니다.\n";
+			system("pause");
+			break;
+		}
+	}
 }
 
 Scene Hunting(Player& player) {

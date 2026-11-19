@@ -12,6 +12,7 @@ enum ITEMLIST {
 	wooden_sword,
 	leaf_crown,
 	flower_ring,
+	heal_potion,
 	ITEM_COUNT
 };
 
@@ -55,8 +56,9 @@ const ItemData  ITEM_TABLE[ITEM_COUNT] = {
 	{ "슬라임 조각", 10, 5, NONE_EQUIP, 0, 0, 0, 0 },
 	{ "견과류", 5, 3, NONE_EQUIP, 0, 0, 0, 0 },
 	{ "나무 검", 10, 7, 	EQUIP_WEAPON, 3, 0, 0, 0 },
-	{ "나뭇잎 왕관", 8, 4, EQUIP_HEAD, 0, 2, 2, 0 },
-	{ "꽃 반지", 6, 4, EQUIP_ACCESSORY, 0, 1, 5, 0 },
+	{ "나뭇잎 왕관", 8, 4, EQUIP_HEAD, 0, 2, 10, 0 },
+	{ "꽃 반지", 6, 4, EQUIP_ACCESSORY, 0, 1, 30, 0 },
+	{ "회복 포션", 5, 2, NONE_EQUIP, 0, 0, 0, 30 },
 };
 
 struct ITEM {
