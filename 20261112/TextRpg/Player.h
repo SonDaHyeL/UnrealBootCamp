@@ -11,9 +11,11 @@ struct Player {
 	int attack = 0;
 	int defense = 0;
 	int hp = 0;
+	int gold = 0;
 	bool quest = false;
 
-	int inven[INVEN_SIZE] = { noItem };
+	ITEM inven[INVEN_SIZE];
+	ITEM equip[EQUIPSLOT_END];
 
 	void Init();
 	void ShowInfo();

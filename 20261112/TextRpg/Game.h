@@ -15,7 +15,8 @@ enum class Scene {
 
 int Select();
 void StartGame(Player& player);
-Scene Town(Player& palyer);
+Scene Town(Player& player);
+Scene Store(Player& player);
 Scene Hunting(Player& player);
 
 

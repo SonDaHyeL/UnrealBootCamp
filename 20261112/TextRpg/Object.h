@@ -3,34 +3,86 @@
 
 struct Player;
 const int INVEN_SIZE = 8;
+const int ACCESSORY_COUNT = 3;
 
-enum ITEMTYPE {
+enum ITEMLIST {
 	noItem = 0,
 	slime_shard,
 	nuts,
+	wooden_sword,
+	leaf_crown,
+	flower_ring,
+	ITEM_COUNT
+};
 
+enum ITEMTYPE {
+	NONE_EQUIP = -1,
+	EQUIP_WEAPON,
+	EQUIP_HEAD,
+	EQUIP_CHEST,
+	EQUIP_LEG,
+	EQUIP_FOOT,
+	EQUIP_ACCESSORY,
+};
+
+enum EQUIPSLOT {
+	SLOT_WEAPON,
+	SLOT_HEAD,
+	SLOT_CHEST,
+	SLOT_LEG,
+	SLOT_FOOT, //무기~발까지. ITEMTYPE과 순서 맞출것!!!!
+	SLOT_ACCESSORY1, //악세사리 칸 3개
+	SLOT_ACCESSORY2,
+	SLOT_ACCESSORY3,
+	EQUIPSLOT_END
+};
+
+struct ItemData {
+	const char* name;
+	int buyPrice;
+	int sellPrice;
+	ITEMTYPE slot;
+	int atk;
+	int def;
+	int plushp;
+	int heal;
+};
+
+const ItemData  ITEM_TABLE[ITEM_COUNT] = {
+	//새로운 것 추가는 늘 맨 아래. Enum 순서와 맞게 쓸 것
+	//   이름   | 구매가 | 판매가 | 종류 | 공격 | 방어 | 추가 HP | 힐량
+	{ "비어 있음", 0, 0, NONE_EQUIP, 0, 0, 0, 0 },
+	{ "슬라임 조각", 10, 5, NONE_EQUIP, 0, 0, 0, 0 },
+	{ "견과류", 5, 3, NONE_EQUIP, 0, 0, 0, 0 },
+	{ "나무 검", 10, 7, 	EQUIP_WEAPON, 3, 0, 0, 0 },
+	{ "나뭇잎 왕관", 8, 4, EQUIP_HEAD, 0, 2, 2, 0 },
+	{ "꽃 반지", 6, 4, EQUIP_ACCESSORY, 0, 1, 5, 0 },
 };
 
 struct ITEM {
-	ITEMTYPE ItemID = noItem;
-	const char* GetName() const {
-		switch (ItemID)
-		{
-		case noItem:
-			return "비어 있음";
-		case slime_shard:
-			return "슬라임 조각";
-		case nuts:
-			return "견과류";
-		default:
-			return "알 수 없음";
-		}
-	}
+	ITEMLIST ItemID = noItem;
 
+	const char* GetName() const { return ITEM_TABLE[ItemID].name; }
+	int GetBuyPrice() const { return ITEM_TABLE[ItemID].buyPrice; }
+	int GetSellPrice() const { return ITEM_TABLE[ItemID].sellPrice; }
+		
+	bool IsEmpty() const { return ItemID == noItem; }
+
+
+	int GetAtk() const {return ITEM_TABLE[ItemID].atk; }
+	int GetDef() const {return ITEM_TABLE[ItemID].def; }
+	int GetPlusHp() const {return ITEM_TABLE[ItemID].plushp; }
+	int GetHeal() const {return ITEM_TABLE[ItemID].heal; }
 };
 
 void ShowInven(Player& player);
-void GetItem(Player& player, ITEMTYPE ItemID);
+int FindEmptySlot(const Player& player);
+
+
+void GetItem(Player& player, ITEMLIST ItemID);
 int DropItem(Player& player);
+
+int BuyItem(Player& player, ITEMLIST ItemID);
+int SellItem(Player& player, int idx);
 
 #endif
