@@ -1,4 +1,5 @@
 ﻿#include "Player.h"
+#include "Game.h"
 #include <iostream>
 
 using namespace std;
@@ -37,12 +38,14 @@ void Player::Init() {
 }
 void Player::ShowInfo() {
 	system("cls");
+	cout << "\n------------------------\n";
 	cout << " > 플레이어 이름 : " << name << endl;
 	cout << " > 직업 : " << jobName << endl;
-	cout << " > 최대 HP : " << maxHp << endl;
-	cout << " > 현재 HP : " << hp << endl;
+	cout << " > HP (최대/현재) : " << maxHp << " / " << hp << endl;
 	cout << " > 공격력 : " << attack << endl;
 	cout << " > 방어력 : " << defense << endl;
+	cout << " :: 소지금 : " << gold << "G" << endl;
+
 }
 
 void PlayerInit(Player& player) {
@@ -55,9 +58,23 @@ void PlayerInit(Player& player) {
 	cout << " 2.궁수\n";
 	cout << " 3.도적\n";
 	cout << " 4.마법사\n";
-	cout << "> ";
-	cin >> player.job;
-	player.Init();
+
+	while (1) {
+		player.job = Select();
+		switch (player.job)
+		{
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			player.Init();
+			return;
+		default:
+			cout << " <!> 잘못된 입력입니다! \n";
+			break;
+		}
+	}
+	
 }
 
 

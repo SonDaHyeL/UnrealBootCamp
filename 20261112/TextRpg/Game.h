@@ -5,7 +5,6 @@
 #include "Object.h"
 
 enum class Scene {
-	MENU,
 	START,
 	TOWN,
 	HUNTING,

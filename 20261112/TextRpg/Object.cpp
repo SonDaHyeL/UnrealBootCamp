@@ -61,8 +61,8 @@ void GetItem(Player& player, ITEMLIST ItemID) {
 }
 
 int DropItem(Player& player) {
-	ShowInven(player);
 	int idx = SelectInvenSlot(player);
+	if (idx < 0) { return -1; }
 	cout << player.inven[idx].GetName() << "을/를 버렸습니다. \n";
 	player.inven[idx].ItemID = noItem;
 	return idx;
@@ -101,6 +101,6 @@ int SellItem(Player& player, int idx) {
 	int price = player.inven[idx].GetSellPrice();
 	cout << player.inven[idx].GetName() << "을/를 판매해 " << price << "골드를 얻었습니다!\n";
 	player.inven[idx].ItemID = noItem;
-	player.gold += price;
+	player.getGold(price);
 	return 1;
 }

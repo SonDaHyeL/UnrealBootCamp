@@ -1,5 +1,6 @@
 ﻿
 #include <iostream>
+#include "SaveLoad.h"
 #include "Player.h"
 #include "Game.h"
 
@@ -11,7 +12,30 @@ void ShowMainMenu(Player& player) {
 	cout << "------------------------\n";
 	cout << "\n\n\n\n\n";
 
-	PlayerInit(player);
+	bool loaded = false;
+	if (HasSaveData()) {
+		cout << "\n------------------------\n";
+		cout << "       Load Player!\n";
+		cout << "------------------------\n";
+		cout << "저장된 데이터가 있습니다.\n";
+		cout << "1.이어하기\n";
+		cout << "2.새로 시작하기\n";
+		if (Select() == 1) {
+			loaded = LoadData(player);
+			if (loaded) {
+				cout << ">> " << player.name << "님! 다시 오신 걸 환영합니다!\n";
+			}
+			else {
+				cout << "<!> 저장 데이터를 불러오지 못했습니다.\n";
+				cout << "새로운 모험을 시작합니다...\n";
+			}
+			system("pause");
+		}
+	}
+
+	if (!loaded) {
+		PlayerInit(player);
+	}
 
 	while (1) {
 		system("cls");
@@ -20,10 +44,10 @@ void ShowMainMenu(Player& player) {
 		cout << "------------------------\n";
 		cout << "\n\n\n\n";
 		cout << "\n------------------------\n";
-		cout << ">> 어떤 행동을 할까요?\n";
 		cout << " 1.플레이어 정보 확인\n";
 		cout << " 2.여행 시작\n";
-		cout << " 3.종료\n";
+		cout << " 3.저장하기\n";
+		cout << " 4.종료\n";
 		int input = Select();
 		switch (input)
 		{
@@ -37,6 +61,16 @@ void ShowMainMenu(Player& player) {
 			StartGame(player);
 			break;
 		case 3:
+			if (SaveData(player)) {
+				cout << ">> 저장했습니다!\n";
+			}
+			else {
+				cout << " (!) 저장에 실패했습니다.\n";
+			}
+			system("pause");
+			break;
+		case 4:
+			SaveData(player);
 			cout << ">> 모험을 종료합니다!\n";
 			return;
 		default:
@@ -49,7 +83,6 @@ void ShowMainMenu(Player& player) {
 
 int main() {
 	Player player;
-	Scene current = Scene::MENU;
 	ShowMainMenu(player);
 	return 0;
 }
