@@ -21,11 +21,14 @@ void StartGame(Player& player) {
 	while (current != Scene::QUIT) {
 		switch (current) {
 		case Scene::START:
+
+			cout << " 0.인벤토리 확인.\n";
 			cout << " 1.마을로 간다.\n";
 			cout << " 2.사냥터로 간다.\n";
 			cout << " 3.모험을 종료한다.\n\n";
 			input = Select();
-			if (input == 1) current = Scene::TOWN;
+			if (input == 0) { ShowInven(player); system("cls"); }
+			else if (input == 1) current = Scene::TOWN;
 			else if (input == 2) current = Scene::HUNTING;
 			else if (input == 3) current = Scene::QUIT;
 			else {
@@ -35,6 +38,9 @@ void StartGame(Player& player) {
 			break;
 		case Scene::TOWN:
 			current = Town(player);
+			break;
+		case Scene::STORE:
+			current = Store(player);
 			break;
 		case Scene::HUNTING:
 			current = Hunting(player);
@@ -56,6 +62,8 @@ Scene Town(Player& player) {
 		cout << "     :: 마을 ::     \n";
 		cout << "------------------------\n";
 		cout << "한적하고 평화로운 곳입니다.\n\n";
+
+		cout << " 0.인벤토리 확인.\n";
 		cout << " 1.주변을 탐색한다.\n";
 		cout << " 2.상점으로 간다.\n";
 		cout << " 3.사냥터로 이동한다.\n";
@@ -63,6 +71,9 @@ Scene Town(Player& player) {
 		int input = Select();
 
 		switch (input) {
+		case 0:
+			ShowInven(player); system("cls");
+			break;
 		case 1:
 			//주변 탐색
 			system("cls");
@@ -106,16 +117,12 @@ Scene Town(Player& player) {
 			break;
 		case 2:
 			//상점
-			system("cls");
-			cout << "\n------------------------\n";
-			cout << "    :: 오늘은 영업 안함. ::    \n";
-			cout << "------------------------\n";
-			cout << "\n\n\n > 이런...\n";
-			system("pause");
-			break;
+			return Scene::STORE;
 		case 3:
+			//사냥터
 			return Scene::HUNTING;
 		case 4:
+			//모험 종료
 			return Scene::QUIT;
 		default:
 			cout << " (!) 잘못된 입력입니다.\n";
@@ -123,6 +130,23 @@ Scene Town(Player& player) {
 			break;
 		}
 	}
+}
+
+Scene Store(Player& player) {
+	system("cls");
+	cout << "\n------------------------\n";
+	cout << "    :: 오늘은 영업 안함. ::    \n";
+	cout << "------------------------\n";
+	cout << "\n\n\n > 이런...\n";
+	system("pause");
+	return Scene::TOWN;
+
+	//미 구현 내용
+	//상점 구매
+	//상점 판매
+	// int idx = SelectInvenSlot(player);
+	// if (idx != -1) SellItem(player, idx);
+	//나가기
 }
 
 Scene Hunting(Player& player) {
@@ -135,12 +159,16 @@ Scene Hunting(Player& player) {
 		cout << "     :: 사냥터 ::     \n";
 		cout << "------------------------\n";
 		cout << "사나운 몬스터 주의! 팻말이 붙어있습니다.\n\n";
+		cout << " 0.인벤토리 확인.\n";
 		cout << " 1.슬라임을 사냥한다.\n";
 		cout << " 2.다람쥐를 사냥한다.\n";
 		cout << " 3.마을로 돌아간다.\n";
 		cout << " 4.모험을 종료한다.\n\n";
 		input = Select();
 		switch (input) {
+		case 0:
+			ShowInven(player); system("cls");
+			break;
 		case 1:
 		case 2:
 			system("cls");
@@ -153,7 +181,8 @@ Scene Hunting(Player& player) {
 
 			if (player.hp <= 0) {
 				cout << "\n>> GAME OVER... \n";
-				cout << "\n\n\n > 이런...\n";
+				cout << "\n\n\n > 이런...(겨우 체력을 회복하고 다시 일어나기.) \n";
+				player.hp = 1;
 				system("pause");
 				return Scene::QUIT;
 			}
@@ -171,3 +200,4 @@ Scene Hunting(Player& player) {
 		}
 	}
 }
+

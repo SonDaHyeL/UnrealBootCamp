@@ -9,24 +9,28 @@ void Player::Init() {
 		jobName = "전사";
 		attack = 5;
 		defense = 3;
+		maxHp = 150;
 		hp = 150;
 		break;
 	case 2: //궁수
 		jobName = "궁수";
 		attack = 3;
 		defense = 2;
+		maxHp = 100;
 		hp = 100;
 		break;
 	case 3: //도적
 		jobName = "도적";
 		attack = 3;
 		defense = 1;
+		maxHp = 120;
 		hp = 120;
 		break;
 	case 4: //마법사
 		jobName = "마법사";
 		attack = 4;
 		defense = 2;
+		maxHp = 100;
 		hp = 100;
 		break;
 	}
@@ -35,6 +39,7 @@ void Player::ShowInfo() {
 	system("cls");
 	cout << " > 플레이어 이름 : " << name << endl;
 	cout << " > 직업 : " << jobName << endl;
+	cout << " > 최대 HP : " << maxHp << endl;
 	cout << " > 현재 HP : " << hp << endl;
 	cout << " > 공격력 : " << attack << endl;
 	cout << " > 방어력 : " << defense << endl;

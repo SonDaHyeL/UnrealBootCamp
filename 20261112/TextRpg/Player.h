@@ -10,6 +10,7 @@ struct Player {
 	int job = 0;
 	int attack = 0;
 	int defense = 0;
+	int maxHp = 0;
 	int hp = 0;
 	int gold = 0;
 	bool quest = false;
