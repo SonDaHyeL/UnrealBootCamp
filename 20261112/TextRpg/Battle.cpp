@@ -82,7 +82,7 @@ void Fight(Player& player, Enemy& enemy) {
 		cout << "\n------------------------\n";
 		cout << "      !!! 전투 !!!      \n";
 		cout << "------------------------\n";
-		cout << player.name << "의 HP (최대/잔여) :" << player.maxHp << "/" << player.hp << endl;
+		cout << player.name << "의 HP (최대/잔여) :" << player.GetMaxHp() << "/" << player.hp << endl;
 		cout << enemy.eName << "의 HP :" << enemy.hp << endl;
 		cout << " 1.공격한다.\n";
 		cout << " 2.방어한다.\n";
@@ -92,21 +92,22 @@ void Fight(Player& player, Enemy& enemy) {
 		switch (input) {
 		case 1:
 			cout << "------------------------\n";
-			ApplyAttack(player.name, enemy.eName, player.attack, enemy.defense, enemy.hp);
+			ApplyAttack(player.name, enemy.eName, player.GetAttack(), enemy.defense, enemy.hp);
 			if (enemy.hp <= 0) {
 				cout << enemy.eName << "이/가 쓰러졌습니다!\n";
 				cout << "> 이겼다!\n ";
+				GainExp(player, enemy.dropExp);
 				GetItem(player, enemy.dropItem);
 				system("pause"); 
 				break;
 			}
-			ApplyAttack(enemy.eName, player.name, enemy.attack, player.defense, player.hp);
+			ApplyAttack(enemy.eName, player.name, enemy.attack, player.GetDefense(), player.hp);
 			system("pause");
 			break;
 		case 2:
 			cout << "------------------------\n";
 			cout << player.name << "은/는 방어 자세를 취했습니다! (방어력 2배)" << endl;
-			ApplyAttack(enemy.eName, player.name, enemy.attack, player.defense * 2, player.hp);
+			ApplyAttack(enemy.eName, player.name, enemy.attack, player.GetDefense() * 2, player.hp);
 			system("pause");
 			break;
 		case 3:

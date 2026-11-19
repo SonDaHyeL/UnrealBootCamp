@@ -39,7 +39,6 @@ void ShowInven(Player& player) { //인벤토리 출력하기
 	cout << " ====== ========= ======" << endl;
 }
 
-
 void RemoveItem(Player& player, int idx) {
 	if (idx < 0 || idx >= INVEN_SIZE) return;
 	for (int i = idx; i < INVEN_SIZE - 1; ++i) {

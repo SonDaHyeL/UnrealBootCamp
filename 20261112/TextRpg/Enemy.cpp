@@ -8,6 +8,7 @@ void Enemy::Init(int input) {
 		defense = 1;
 		hp = 20;
 		dropItem = slime_shard;
+		dropExp = 4;
 		break;
 	case 2:
 		eName = "다람쥐";
@@ -15,6 +16,7 @@ void Enemy::Init(int input) {
 		defense = 2;
 		hp = 15;
 		dropItem = nuts;
+		dropExp = 2;
 		break;
 	}
 }

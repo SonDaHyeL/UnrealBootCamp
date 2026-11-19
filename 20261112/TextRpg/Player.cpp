@@ -8,44 +8,41 @@ void Player::Init() {
 	switch (job) {
 	case 1: //전사
 		jobName = "전사";
-		attack = 5;
-		defense = 3;
-		maxHp = 150;
-		hp = 150;
+		attack = 3;		defense = 3;	basehp = 150;
+		growAtk = 1;	growDef = 2;	growHP = 15;
 		break;
 	case 2: //궁수
 		jobName = "궁수";
-		attack = 3;
-		defense = 2;
-		maxHp = 100;
-		hp = 100;
+		attack = 3;		defense = 2;	basehp = 100;
+		growAtk = 2;	growDef = 2;	growHP = 10;
 		break;
 	case 3: //도적
 		jobName = "도적";
-		attack = 3;
-		defense = 1;
-		maxHp = 120;
-		hp = 120;
+		attack = 3;		defense = 1;	basehp = 120;
+		growAtk = 3;	growDef = 1;	growHP = 10;
 		break;
 	case 4: //마법사
 		jobName = "마법사";
-		attack = 4;
-		defense = 2;
-		maxHp = 100;
-		hp = 100;
+		attack = 4;		defense = 2;	basehp = 100;
+		growAtk = 3;	growDef = 1;	growHP = 10;
 		break;
 	}
+	level = 1;
+	exp = 0;
+	hp = GetMaxHp();
 }
 void Player::ShowInfo() {
 	system("cls");
 	cout << "\n------------------------\n";
-	cout << " > 플레이어 이름 : " << name << endl;
-	cout << " > 직업 : " << jobName << endl;
-	cout << " > HP (최대/현재) : " << maxHp << " / " << hp << endl;
-	cout << " > 공격력 : " << attack << endl;
-	cout << " > 방어력 : " << defense << endl;
-	cout << " :: 소지금 : " << gold << "G" << endl;
 
+	cout << " > 플레이어 이름(LV." << level << ") : " << name << endl;
+	cout << " > 직업 : " << jobName << endl;
+	cout << " > HP (최대/현재) : " << GetMaxHp() << " / " << hp << endl;
+	cout << " > 공격력 : " << GetAttack() << endl;
+	cout << " > 방어력 : " << GetDefense() << endl;
+	cout << " :: 소지금 : " << gold << "G ::" << endl;
+
+	cout << endl << " >> 다음 LV까지 " << GetNeedExp() - exp << "필요!" << endl;
 }
 
 void PlayerInit(Player& player) {
@@ -77,4 +74,25 @@ void PlayerInit(Player& player) {
 	
 }
 
+void GainExp(Player& player, int amount) {
+	player.exp += amount;
+	cout << " >> 경험치 " << amount << " 획득! (" << player.exp << "/" << player.GetNeedExp() << ")\n";
+	
+	while (player.exp >= player.GetNeedExp()) {
+		player.exp -= player.GetNeedExp();
 
+		if (player.level + 1 > MAX_LEVEL) {
+			cout << ">> 이미 최대 레벨입니다!" << endl;
+			cout << ":: 레벨 초과 보너스 보상 : 20G :: " << endl;
+			player.AddGold(20);
+			continue;
+		}
+
+		player.level++;
+		player.hp = player.GetMaxHp();
+		cout << "=======★ Level UP!!! ★======= " << endl;
+		cout << ">> LV " << player.level - 1 << " -> LV " << player.level << endl;
+	}
+	
+	return;
+}

@@ -10,6 +10,7 @@ struct Enemy {
 	int defense = 0;
 	int hp = 0;
 	ITEMLIST dropItem = noItem;
+	int dropExp = 0;
 
 	void Init(int input);
 };
