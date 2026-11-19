@@ -1,22 +1,27 @@
 ﻿#include "SaveLoad.h"
 #include <fstream>
 #include <string>
+#include <limits>
 
 // 저장 파일 형식 (한 줄씩, 저장/불러오기 순서는 반드시 같아야 함)
 //   버전
 //   이름
-//   직업 이름
-//   직업 번호
-//   공격력 방어력
-//   최대HP 현재HP
+//   직업 번호 레벨 경험치 현재HP
 //   골드 퀘스트(0/1)
 //   인벤토리 아이템 ID x INVEN_SIZE
 //   장비 아이템 ID x EQUIPSLOT_END
 //
+// 직업 이름, 기본 능력치, 성장치, 최대HP는 저장하지 않는다.
+// 불러올 때 직업 번호로 Init()을 호출해 다시 계산한다. (밸런스를 바꿔도 예전 저장 파일에 반영됨)
+//
 // Player에 필드를 추가하면 SaveData/LoadData 양쪽을 같은 위치에 수정하고 SAVE_VERSION을 올릴 것.
 namespace {
-	const int SAVE_VERSION = 1;
+	const int SAVE_VERSION = 2;   // 2: 레벨 시스템 도입 (능력치 대신 레벨/경험치 저장)
 	const char* SAVE_PATH = "Playerdata.txt";
+
+	// Player::Init()이 처리하는 직업 번호 범위 (직업을 추가하면 같이 수정)
+	const int JOB_MIN = 1;
+	const int JOB_MAX = 4;
 
 	// 파일에서 읽은 숫자가 유효한 아이템 ID인지 확인
 	bool IsValidItemId(int id) {
@@ -37,10 +42,7 @@ bool SaveData(const Player& player) {
 
 	out << SAVE_VERSION << '\n';
 	out << player.name << '\n';
-	out << player.jobName << '\n';
-	out << player.job << '\n';
-	out << player.attack << ' ' << player.defense << '\n';
-	out << player.maxHp << ' ' << player.hp << '\n';
+	out << player.job << ' ' << player.level << ' ' << player.exp << ' ' << player.hp << '\n';
 	out << player.gold << ' ' << player.quest << '\n';
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {
@@ -71,14 +73,36 @@ bool LoadData(Player& player) {
 	// 읽는 도중 실패해도 기존 player가 망가지지 않도록 임시 객체에 먼저 읽는다.
 	Player loaded = player;
 
-	in.ignore(); // 숫자 뒤에 남은 줄바꿈 제거 (getline 전에 필수)
+	// 버전 숫자 뒤에 남은 내용(줄바꿈, 공백 등)을 줄 끝까지 버린다. (getline 전에 필수)
+	in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	std::getline(in, loaded.name);
-	std::getline(in, loaded.jobName);
+	if (!in || loaded.name.empty()) {
+		return false;
+	}
 
-	in >> loaded.job;
-	in >> loaded.attack >> loaded.defense;
-	in >> loaded.maxHp >> loaded.hp;
+	int job = 0, level = 1, exp = 0, hp = 0;
+	in >> job >> level >> exp >> hp;
+	if (!in || job < JOB_MIN || job > JOB_MAX || level < 1 || level > MAX_LEVEL || exp < 0) {
+		return false;
+	}
+
+	// 직업 기본값·성장치·직업 이름을 다시 채운다. (Init은 level/exp/hp를 초기화하므로 반드시 먼저 호출)
+	loaded.job = job;
+	loaded.Init();
+
+	// Init 뒤에 저장된 진행도를 덮어쓴다.
+	loaded.level = level;
+	loaded.exp = exp;
+	loaded.hp = hp;
+	if (loaded.hp > loaded.GetMaxHp()) loaded.hp = loaded.GetMaxHp(); // 밸런스 변경으로 최대HP가 줄었을 때
+	if (loaded.hp < 1) loaded.hp = 1;
+	// 경험치가 이미 다음 레벨 요구량 이상이면 "다음 LV까지"가 음수로 보이므로 직전 값으로 맞춘다.
+	if (loaded.exp >= loaded.GetNeedExp()) loaded.exp = loaded.GetNeedExp() - 1;
+
 	in >> loaded.gold >> loaded.quest;
+	if (!in || loaded.gold < 0) {
+		return false;
+	}
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {
 		int id = 0;
