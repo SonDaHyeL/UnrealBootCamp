@@ -20,7 +20,7 @@ struct Player {
 
 	void Init();
 	void ShowInfo();
-	void getGold(int amount) { gold += amount; };
+	void AddGold(int amount) { gold += amount; };
 };
 
 void PlayerInit(Player& player);

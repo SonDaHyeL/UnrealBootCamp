@@ -137,7 +137,7 @@ void Fight(Player& player, Enemy& enemy) {
 		cout << "------------------------\n";
 		cout << "사냥터를 어지럽히는 슬라임을 잡자!(1/1)\n\n";
 		cout << "\n\n >> 퀘스트 완료 보상으로 10골드를 얻었습니다!\n";
-		player.getGold(10);
+		player.AddGold(10);
 		player.quest = false;
 	}
 	printf("> 야호!\n");

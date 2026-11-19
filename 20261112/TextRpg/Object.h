@@ -67,22 +67,33 @@ struct ITEM {
 	int GetSellPrice() const { return ITEM_TABLE[ItemID].sellPrice; }
 		
 	bool IsEmpty() const { return ItemID == noItem; }
+	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
 
-
+	//아이템 효과 호출
+	ITEMTYPE GetEquipType() const { return ITEM_TABLE[ItemID].slot; }
 	int GetAtk() const {return ITEM_TABLE[ItemID].atk; }
 	int GetDef() const {return ITEM_TABLE[ItemID].def; }
 	int GetPlusHp() const {return ITEM_TABLE[ItemID].plushp; }
 	int GetHeal() const {return ITEM_TABLE[ItemID].heal; }
+
 };
 
-void ShowInven(Player& player);
+//인벤토리 유틸리티
 int FindEmptySlot(const Player& player);
+int SelectInvenSlot(Player& player);
+void ShowInven(Player& player);
 
-
+//인벤토리 추가 삭제
 void GetItem(Player& player, ITEMLIST ItemID);
 int DropItem(Player& player);
 
+//상점 구매 판매
 int BuyItem(Player& player, ITEMLIST ItemID);
 int SellItem(Player& player, int idx);
+
+//장비 관리 (미구현)
+//int  FindEquipSlot(const Player& player, ITEMTYPE type);
+//bool EquipItem(Player& player, int idx);
+//bool UnequipItem(Player& player, int slot);
 
 #endif

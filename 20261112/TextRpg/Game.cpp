@@ -32,7 +32,7 @@ void StartGame(Player& player) {
 			cout << " 2.사냥터로 간다.\n";
 			cout << " 3.모험을 종료한다.\n\n";
 			input = Select();
-			if (input == 0) { ShowInven(player); system("cls"); }
+			if (input == 0) { ShowInven(player); system("pause"); }
 			else if (input == 1) current = Scene::TOWN;
 			else if (input == 2) current = Scene::HUNTING;
 			else if (input == 3) current = Scene::QUIT;
@@ -77,7 +77,7 @@ Scene Town(Player& player) {
 
 		switch (input) {
 		case 0:
-			ShowInven(player); system("cls");
+			ShowInven(player); system("pause");
 			break;
 		case 1:
 			//주변 탐색
@@ -172,7 +172,7 @@ Scene Hunting(Player& player) {
 		input = Select();
 		switch (input) {
 		case 0:
-			ShowInven(player); system("cls");
+			ShowInven(player); system("pause");
 			break;
 		case 1:
 		case 2:
