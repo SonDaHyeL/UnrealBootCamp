@@ -70,6 +70,7 @@ struct ITEM {
 		
 	bool IsEmpty() const { return ItemID == noItem; }
 	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
+	bool IsUseble() const { return GetHeal() >= 0; }
 
 	//아이템 효과 호출
 	ITEMTYPE GetEquipType() const { return ITEM_TABLE[ItemID].slot; }
@@ -77,7 +78,6 @@ struct ITEM {
 	int GetDef() const {return ITEM_TABLE[ItemID].def; }
 	int GetPlusHp() const {return ITEM_TABLE[ItemID].plushp; }
 	int GetHeal() const {return ITEM_TABLE[ItemID].heal; }
-
 };
 
 //인벤토리 유틸리티
@@ -92,6 +92,14 @@ int DropItem(Player& player);
 //상점 구매 판매
 int BuyItem(Player& player, ITEMLIST ItemID);
 int SellItem(Player& player, int idx);
+
+//아이템 사용
+bool UseItem(Player& player, int idx);
+void DropItemAt(Player& player, int idx);
+void ItemMeun(Player& player, int idx);
+void InvenMenu(Player& player, int idx);
+
+
 
 //장비 관리 (미구현)
 //int  FindEquipSlot(const Player& player, ITEMTYPE type);

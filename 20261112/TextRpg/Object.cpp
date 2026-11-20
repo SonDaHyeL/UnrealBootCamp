@@ -80,14 +80,38 @@ void GetItem(Player& player, ITEMLIST ItemID) {
 	}
 }
 
+int DropItamAt(Player& player, int idx) {
+	cout << "[" << player.inven[idx].GetName() << "]을/를 버렸습니다. \n";
+	RemoveItem(player, idx);
+}
+
 int DropItem(Player& player) {
 	int idx = SelectInvenSlot(player);
 	if (idx == -1) { return false; }
-	cout << "[" << player.inven[idx].GetName() << "]을/를 버렸습니다. \n";
-	RemoveItem(player, idx);
+	DropItamAt(player, idx);
 	return 1;
 }
 
+// ::인벤토리:: 아이템 사용
+bool UseItem(Player& player, int idx) {
+	if (idx >= INVEN_SIZE || idx < 0 || player.inven[idx].IsEmpty()) return false;
+	ITEM item = player.inven[idx];
+
+	if (!item.IsUseble()) { //사용할 수 있는 아이템이 아니라면 사용 못함
+		cout << ">> [" << item.GetName() << "]은/는 사용할 수 없는 아이템입니다." << endl;
+		return false;
+	}
+	if (item.GetHeal() > 0) { //체력이 이미 가득 차 있다면 사용하지 않음
+		cout << ">> 이미 HP가 가득 차 있습니다!" << endl;
+		return false;
+	}
+	cout << ">> [" << item.GetName() << "] 사용! HP를 " << item.GetHeal() << "만큼 회복합니다.";
+	player.hp += item.GetHeal();
+	if (player.GetMaxHp() < player.hp) player.hp = player.GetMaxHp();
+
+	RemoveItem(player, idx);
+	return true;
+}
 
 // ::상점:: 아이템 구매 / 판매
 int BuyItem(Player& player, ITEMLIST ItemID) { // -1 골드 부족 | 0 인벤토리 가득 참 | 1 구매 성공
@@ -125,3 +149,5 @@ int SellItem(Player& player, int idx) {
 	RemoveItem(player, idx);
 	return 1;
 }
+
+

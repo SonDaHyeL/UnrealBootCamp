@@ -212,7 +212,7 @@ Scene Store(Player& player) {
 			cout << " :: 소지금 : " << player.gold << "G\n";
 			ShowInven(player);
 
-			cout << "\n0.아무것도팔지 않는다.\n\n";
+			cout << "\n0.아무것도 팔지 않는다.\n\n";
 			cout << ">> 팔고 싶은 아이템을 선택해주세요!\n";
 
 			int input = Select();
