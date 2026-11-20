@@ -16,22 +16,97 @@ void part1(); //PART 1 : 기본 생성 및 원소 접근
 void part2(); //PART 2 : 원소 추가 및 삭제
 void part3(); //PART 3 : 반복자와 순회
 void part4(); //PART 4 : 크기(size)와 메모리(capacity) 관리
-void part5(); //PART 5 : 
+void part5(); //PART 5 : 벡터 교환 및 복사
 
 
 int main() {
-	//part1();
-	//part2();
+	part1();
+	part2();
 	part3();
+	part4();
+	part5();
 
 
 	return 0;
+}
+
+void part5() { 
+	//PART 5 : 벡터 교환 및 복사
+	cout << "===== 5. 벡터 교환과 복사 =====" << endl;
+
+	vector<int> v1 = { 1,2,3 };
+	vector<int> v2 = { 40,50,60 };
+	cout << ">> 초기 벡터 값(v1) : ";
+	print(v1);
+	cout << ">> 초기 벡터 값(v2) : ";
+	print(v2);
+
+	// 1. operator=() 대입연산! 복사하는 방식.
+	v2 = v1;
+	cout << "\n> v2에 v1을 복사!" << endl;
+	cout << ">> 벡터 값(v1) : ";
+	print(v1);
+	cout << ">> 벡터 값(v2) : ";
+	print(v2);
+
+	// 2. v2.swap(v1) v1 과 v2의 원소와 capacity를 서로 바꾼다. (모든걸 스왑한다!!!)
+	v1 = { 11,12,13 };
+	v2 = { 20,25,30, 8, 7 };
+	cout << "\n> v1, v2 값 초기화" << endl;
+	cout << ">> 벡터 값(v1) : ";
+	print(v1);
+	cout << "> 벡터 Size : " << v1.size() << endl;
+	cout << "> 벡터 Capacity : " << v1.capacity() << endl << endl;
+
+	cout << ">> 벡터 값(v2) : ";
+	print(v2);
+	cout << "> 벡터 Size : " << v2.size() << endl;
+	cout << "> 벡터 Capacity : " << v2.capacity() << endl << endl;
+
+
+	cout << "\n> v2에 v1을 스왑!" << endl;
+	v2.swap(v1);
+	cout << ">> 벡터 값(v1) : ";
+	print(v1);
+	cout << "> 벡터 Size : " << v1.size() << endl;
+	cout << "> 벡터 Capacity : " << v1.capacity() << endl << endl;
+
+	cout << ">> 벡터 값(v2) : ";
+	print(v2);
+	cout << "> 벡터 Size : " << v2.size() << endl;
+	cout << "> 벡터 Capacity : " << v2.capacity() << endl << endl;
+
 }
 
 
 void part4() { 
 	//PART 4 : 크기(size)와 메모리(capacity) 관리
 	cout << "===== 4. 크기(size)와 메모리(capacity) =====" << endl;
+	vector <int> v = { 10,20,30 };
+	cout << ">> 초기 벡터 값 : ";
+	print(v);
+	cout << ">> 초기 벡터 Size : " << v.size() << endl;
+	cout << ">> 초기 벡터 Capacity : " << v.capacity() << endl << endl;
+
+	v.reserve(10); //10개의 원소를 할당할 자리를 미리 동적 할당함
+	cout << ">> reserve(10) 이후 벡터 값 : ";
+	print(v);
+	cout << ">> 벡터 Size : " << v.size() << endl;
+	cout << ">> 벡터 Capacity : " << v.capacity() << endl << endl;
+
+
+	v.resize(5); //크기를 n으로 변경. n이 기존값(여기서는 10) 보다 크면 0로 초기화. **capacity는 줄지 않는다!
+	cout << ">> v.resize(5) 이후 벡터 값 : ";
+	print(v);
+	cout << ">> 벡터 Size : " << v.size() << endl;
+	cout << ">> 벡터 Capacity : " << v.capacity() << endl << endl;
+
+	v.resize(7, 1); //크기를 n으로 변경. n이 기존값(여기서는 5) 보다 크면 1로 초기화. **capacity는 줄지 않는다!
+	cout << ">> v.resize(7, 1) 이후 벡터 값 : ";
+	print(v);
+	cout << ">> 벡터 Size : " << v.size() << endl;
+	cout << ">> 벡터 Capacity : " << v.capacity() << endl << endl;
+
 }
 
 void part3() {
