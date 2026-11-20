@@ -3,6 +3,7 @@
 #include "Struct.h"
 #include "DoubleBuffering.h"
 #include "Player.h"
+#include "Bullet.h"
 
 
 static Tile BG[DF_BG_SIZEY][DF_BG_SIZEX] = {};
@@ -20,17 +21,16 @@ void Start()
 }
 
 
-
-int PositionX = 0;
-int PositionY = 0;
 void Update()
 {
 	PlayerUpdate();
+	BulletUpdate();
 
 }
 void Draw()
 {
 	PlayerDraw(BG);
+	BulletDraw(BG);
 }
 
 void ClearScreen()
@@ -66,6 +66,7 @@ int main()
 		Update(); //계속 들어옴.
 		Draw();
 		Render();
+		Sleep(30);
 	}
 	ScreenRelease(); //종료시 해야될처리
 }
