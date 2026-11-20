@@ -7,14 +7,6 @@ static const int PlayerWidth = 8;
 static int FireCooldown = 0; //발사 후 남은 대기 프레임
 static int MoveYDelay = 0; //세로 이동 후 남은 대기 프레임
 
-enum KeyType {
-	SPACE_KEY = 32,
-	UP_KEY = 72,
-	LEFT_KEY = 75,
-	RIGHT_KEY = 77,
-	DOWN_KEY = 80,
-};
-
 static Player player = {};
 static bool IsKeyDown(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -52,33 +44,6 @@ void PlayerUpdate()
 		BulletFire({ (SHORT)(player.Position.X + PlayerWidth),player.Position.Y });
 		FireCooldown = 3;
 	}
-
-	//***기존 키 입력 방식. 딱딱하고 불편함. 
-	
-	//if (!_kbhit()) return; //눌린 키가 없으면 바로 리턴. 화면이 플레이어가 누르지 않아도 진행되게 함.
-	//int PressKey = _getch();
-	//if(PressKey == 224) PressKey = _getch();
-	//switch (PressKey)
-	//{
-	//case LEFT_KEY:
-	//	if(player.Position.X > 0) player.Position.X--;
-	//	break;
-	//case RIGHT_KEY:
-	//	if (player.Position.X < DF_BG_SIZEX - PlayerWidth) player.Position.X++;
-	//	break;
-	//case UP_KEY:
-	//	if (player.Position.Y > 0)
-	//		player.Position.Y--;
-	//	break;
-	//case DOWN_KEY:
-	//	if (player.Position.Y < DF_BG_SIZEY - 1) player.Position.Y++;
-	//	break;
-	//case SPACE_KEY:
-	//	BulletFire({ (SHORT)(player.Position.X + PlayerWidth),player.Position.Y });
-	//	break;
-	//default:
-	//	break;
-	//}
 }
 
 

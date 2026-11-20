@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <conio.h>
+
 #include <Windows.h>
 
 #define DF_BG_SIZEX 200
