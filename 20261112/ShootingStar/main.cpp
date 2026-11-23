@@ -6,6 +6,7 @@
 #include "Bullet.h"
 #include "Enemy.h"
 #include "UI.h"
+#include "TimeManager.h"
 
 
 static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
@@ -29,7 +30,6 @@ void Update()
 	PlayerUpdate();
 	BulletUpdate();
 	EnemyUpdate();
-
 }
 void Draw()
 {
@@ -69,13 +69,15 @@ int main()
 
 	while (true) //메인 게임 루프
 	{
+		FPSUpdate();
 		ClearScreen();
 		if (PlayerGetHP() > 0) {
 			Update(); //계속 들어옴.
 		}
 		else if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-			break; //게임오버 상태에서 ESC키를 누르면 ScreenRelease(); 호출. 게임 종료
+			break; //게임오버 상태에서 ESC키를 누르면 ScreenRelease(); 호출. 게
 		}
+		PrintUI();
 		Draw();
 		Render();
 		Sleep(16);

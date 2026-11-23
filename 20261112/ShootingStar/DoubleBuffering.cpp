@@ -1,5 +1,7 @@
 ﻿#include "DoubleBuffering.h"
+#include "TimeManager.h"
 #include <Windows.h>
+#include <stdio.h>
 static int g_ScreenIndex = 0; //출력할 종이번호
 static HANDLE g_hScreen[2];//종이 갯수
 //화면 초기 세팅
@@ -83,4 +85,17 @@ void ScreenRelease()
 	CloseHandle(g_hScreen[0]);
 	CloseHandle(g_hScreen[1]);
 
+}
+
+void PrintUI() {
+	char UI[DF_BG_SIZEX] = {};
+	sprintf_s(UI, "FPS : %d", GetFps());
+	ScreenPrintUI(0, DF_BG_SIZEX + 9, UI);
+}
+
+void ScreenPrintUI(SHORT x, SHORT y, const char* _String) {
+	DWORD dw = 0;
+	COORD Pos = { x,y };
+	SetConsoleCursorPosition(g_hScreen[g_ScreenIndex], Pos);
+	WriteFile(g_hScreen[g_ScreenIndex], _String, strlen(_String), &dw, NULL);
 }
