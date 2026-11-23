@@ -11,6 +11,20 @@
 
 static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
 
+//게임 상태 관리 변수 추가
+enum GameState { STATE_TITLE, STATE_PLAY, STATE_GAMEOVER };
+static GameState State = STATE_TITLE;
+
+static bool IsKeyPressed(int vk)
+{
+	static bool prev[256] = {};
+	bool now = (GetAsyncKeyState(vk) & 0x8000) != 0;
+	bool pressed = now && !prev[vk];
+	prev[vk] = now;
+	return pressed;
+}
+
+
 //초기화
 void Start()
 {
@@ -39,8 +53,6 @@ void Draw()
 	EnemyDraw(BG);
 	EBulletDraw(BG);
 	UIDraw(BG);
-
-	if (PlayerGetHP() <= 0) { GameOverUI(BG); }
 }
 
 void ClearScreen()
@@ -69,17 +81,32 @@ int main()
 {
 	Start();//한번 호출 초기화 용도
 
-	while (true) //메인 게임 루프
+	bool running = true;
+	while (running) //메인 게임 루프
 	{
 		FPSUpdate();
 		ClearScreen();
-		if (PlayerGetHP() > 0) {
+
+		switch (State)
+		{
+		case STATE_TITLE:
+			TitleDraw(BG);
+			if (IsKeyPressed(VK_RETURN)) { State = STATE_PLAY; }
+			else if (IsKeyPressed(VK_ESCAPE)) { running = false; }
+			break;
+		case STATE_PLAY:
 			Update(); //계속 들어옴.
+			Draw();
+			if (PlayerGetHP() <= 0) { State = STATE_GAMEOVER; }
+			break;
+		case STATE_GAMEOVER:
+			Draw();
+			GameOverUI(BG);
+			if (IsKeyPressed(VK_ESCAPE)) { running = false; }
+			break;
+		default:
+			break;
 		}
-		else if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-			break; //게임오버 상태에서 ESC키를 누르면 ScreenRelease(); 호출. 게
-		}
-		Draw();
 		Render();
 		Sleep(16);
 	}

@@ -5,3 +5,7 @@
 void ScoreAdd(int amount);
 void UIDraw(Tile(*_BG)[DF_BG_SIZEX]);
 void GameOverUI(Tile(*_BG)[DF_BG_SIZEX]);
+
+
+//메인 타이틀 화면 출력
+void TitleDraw(Tile(*_BG)[DF_BG_SIZEX]);
