@@ -7,6 +7,7 @@
 #include "Enemy.h"
 #include "UI.h"
 #include "TimeManager.h"
+#include "Background.h"
 
 
 static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
@@ -30,9 +31,9 @@ void Start()
 {
 	srand((unsigned)time(NULL)); //새 시드 
 	//10만큼 DF_BG_SIZEY보다 크게 잡아서 UI자리 넣음
-	system("mode con:cols=200 lines=50");
-
+	system("mode con:cols=120 lines=50");
 	ScreenInit();
+	BackgroundInit();
 }
 
 void GameReset() {
@@ -44,6 +45,7 @@ void GameReset() {
 
 void Update()
 {
+	BackgroundUpdate();
 	PlayerUpdate();
 	BulletUpdate();
 	EnemyUpdate();
@@ -51,6 +53,7 @@ void Update()
 }
 void Draw()
 {
+	BackgroundDraw(BG);
 	PlayerDraw(BG);
 	BulletDraw(BG);
 	EnemyDraw(BG);
@@ -93,6 +96,8 @@ int main()
 		switch (State)
 		{
 		case STATE_TITLE:
+			BackgroundUpdate();
+			BackgroundDraw(BG);
 			TitleDraw(BG);
 			if (IsKeyPressed(VK_RETURN)) { 
 				GameReset();

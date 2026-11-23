@@ -5,7 +5,7 @@
 #include <ctime> //rand 호출 용
 
 //게임 화면 크기
-#define DF_BG_SIZEX 200
+#define DF_BG_SIZEX 120
 #define DF_BG_SIZEY 40 
 
 //게임 UI 화면 크기
@@ -44,3 +44,12 @@ struct Bullet {
 inline COORD BulletCoord(const Bullet& b) {
 	return { (SHORT)b.X, (SHORT)b.Y };
 }
+
+struct Star {
+	float X;
+	SHORT Y;
+	float Speed;
+	char Text;
+	unsigned short Color;
+};
+

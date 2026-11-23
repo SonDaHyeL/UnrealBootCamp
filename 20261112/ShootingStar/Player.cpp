@@ -67,7 +67,7 @@ void PlayerUpdate()
 		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth), player.Position.Y }; //총구 위치
 
 		int lines = min(1 + (Level - 1) / 3, MAX_SHOTLINE);
-		const float GAP = 0.2; //사격 라인 사이 각도 간격
+		const float GAP = 0.2f; //사격 라인 사이 각도 간격
 
 		for (int i = 0; i < lines; ++i) {
 			float vy = (i - (lines - 1) / 2.0f) * GAP; //가운데는 0. 위아래로 대칭 형태 배치
