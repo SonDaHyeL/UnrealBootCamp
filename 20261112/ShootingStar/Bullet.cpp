@@ -13,6 +13,12 @@ static void EnemyKilled() {
 	AddExp(10);
 }
 
+void BulletReset() {
+	for (int i = 0; i < MAX_BULLET; ++i) {
+		bullets[i].Active = false;
+	}
+}
+
 //pos 위치에서 (vx, vy) 벡터로 총알 발사
 void BulletFire(COORD pos, float vx, float vy)
 {

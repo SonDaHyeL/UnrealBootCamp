@@ -33,11 +33,14 @@ void Start()
 	system("mode con:cols=200 lines=50");
 
 	ScreenInit();
-
-	COORD SpawnPoint = { 10,20 };
-	PlayerStart(SpawnPoint);
 }
 
+void GameReset() {
+	PlayerStart({ 10,20 });
+	BulletReset();
+	EnemyReset();
+	ScoreReset();
+}
 
 void Update()
 {
@@ -91,7 +94,10 @@ int main()
 		{
 		case STATE_TITLE:
 			TitleDraw(BG);
-			if (IsKeyPressed(VK_RETURN)) { State = STATE_PLAY; }
+			if (IsKeyPressed(VK_RETURN)) { 
+				GameReset();
+				State = STATE_PLAY; 
+			}
 			else if (IsKeyPressed(VK_ESCAPE)) { running = false; }
 			break;
 		case STATE_PLAY:
@@ -102,6 +108,7 @@ int main()
 		case STATE_GAMEOVER:
 			Draw();
 			GameOverUI(BG);
+			if (IsKeyPressed(VK_RETURN)) { State = STATE_TITLE; }
 			if (IsKeyPressed(VK_ESCAPE)) { running = false; }
 			break;
 		default:

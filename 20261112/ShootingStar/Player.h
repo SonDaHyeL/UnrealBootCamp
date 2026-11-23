@@ -8,6 +8,7 @@ void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX]);
 int PlayerGetHP();
 bool PlayerHitCheck(COORD pos);
 
+
 int GetPlayerLevel();
 int GetPlayerExp();
 int NeedNextExp();

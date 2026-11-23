@@ -31,6 +31,12 @@ static bool IsKeyDown(int vk) {
 void PlayerStart(COORD pos)
 {
 	player.Position = pos;
+	PlayerHP = PLAYER_MAXHP;
+	Level = 1;
+	Exp = 0;
+	FireCooldown = 0;
+	MoveYDelay = 0;
+	NAttackTimer = 0;
 }
 
 void PlayerUpdate()

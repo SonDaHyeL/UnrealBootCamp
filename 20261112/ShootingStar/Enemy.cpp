@@ -13,6 +13,17 @@ static const int EnemyWidth = 3;
 static int SpawnTimer = 0;
 static int MoveDelay = 0;
 
+void EnemyReset() {
+	for (int i = 0; i < MAX_ENEMY; ++i) {
+		enemys[i].Active = false;
+	}
+	for (int i = 0; i < MAX_EBULLET; ++i) {
+		eBullets[i].Active = false;
+	}
+	SpawnTimer = 0;
+	MoveDelay = 0;
+}
+
 void EnemySpawn()
 {
 	for (int i = 0; i < MAX_ENEMY;++i) {
@@ -28,7 +39,7 @@ void EnemySpawn()
 
 void EnemyUpdate()
 {
-	if (++SpawnTimer >= 50) { //20프레임 당 한 개체 생성
+	if (++SpawnTimer >= 20) { //20프레임 당 한 개체 생성
 		SpawnTimer = 0;
 		EnemySpawn();
 	}
@@ -44,7 +55,7 @@ void EnemyUpdate()
 		}
 	}
 
-	if (++MoveDelay < 5) return; //Enemy 속도 조절 (2프레임에 1칸)
+	if (++MoveDelay < 3) return; //Enemy 속도 조절 (2프레임에 1칸)
 	MoveDelay = 0;
 
 	for (int i = 0; i < MAX_ENEMY; ++i) {

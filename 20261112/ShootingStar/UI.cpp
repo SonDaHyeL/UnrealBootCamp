@@ -91,10 +91,10 @@ void GameOverUI(Tile(*_BG)[DF_BG_SIZEX]) {
 	sprintf_s(buf, "최종 점수 : %d", Score);
 	DrawStringCenter(_BG, top + 3, buf, 0x0F);
 
-	DrawStringCenter(_BG, top + 5, "ESC : 종료", 0x07);
+	DrawStringCenter(_BG, top + 5, "ENTER : 타이틀로    ESC : 종료", 0x07);
 }
 
-
+void ScoreReset() { Score = 0; }
 
 
 //메인 화면 UI
