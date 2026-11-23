@@ -70,7 +70,7 @@ int main()
 		Update(); //계속 들어옴.
 		Draw();
 		Render();
-		Sleep(30);
+		Sleep(16);
 	}
 	ScreenRelease(); //종료시 해야될처리
 }

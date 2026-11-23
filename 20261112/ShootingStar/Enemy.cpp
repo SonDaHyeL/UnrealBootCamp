@@ -24,11 +24,11 @@ void EnemySpawn()
 
 void EnemyUpdate()
 {
-	if (++SpawnTimer >= 20) { //20프레임 당 한 개체 생성
+	if (++SpawnTimer >= 100) { //20프레임 당 한 개체 생성
 		SpawnTimer = 0;
 		EnemySpawn();
 	}
-	if (++MoveDelay < 2) return; //Enemy 속도 조절 (2프레임에 1칸)
+	if (++MoveDelay < 5) return; //Enemy 속도 조절 (2프레임에 1칸)
 	MoveDelay = 0;
 
 	for (int i = 0; i < MAX_ENEMY; ++i) {
@@ -50,4 +50,16 @@ void EnemyDraw(Tile(*_BG)[DF_BG_SIZEX])
 			t.Color = 0x0D;
 		}
 	}
+}
+
+bool EnemyHitCheck(COORD pos) {
+	for (int i = 0; i < MAX_ENEMY; ++i) {
+		if (!enemys[i].Active) continue;
+
+		if (pos.Y == enemys[i].Position.Y && pos.X >= enemys[i].Position.X && pos.X < enemys[i].Position.X + EnemyWidth) {
+			enemys[i].Active = false;
+			return true;
+		}
+	}
+	return false;
 }
