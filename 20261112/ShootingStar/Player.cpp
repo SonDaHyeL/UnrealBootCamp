@@ -1,11 +1,14 @@
 ﻿#include "Player.h"
+#include "Enemy.h"
 #include "Bullet.h"
 static const char* PlayerShape = "~(0,0)>>";
+static const char* PlayerDeadShape = "~(X,X)>>";
 static const int PlayerWidth = 8;
 
 
 static int FireCooldown = 0; //발사 후 남은 대기 프레임
 static int MoveYDelay = 0; //세로 이동 후 남은 대기 프레임
+static int PlayerHP = PLAYER_MAXHP; //플레이어 체력
 
 static Player player = {};
 static bool IsKeyDown(int vk) {
@@ -44,16 +47,28 @@ void PlayerUpdate()
 		BulletFire({ (SHORT)(player.Position.X + PlayerWidth),player.Position.Y });
 		FireCooldown = 3;
 	}
+
+
+	//적과 충돌시 체력 감소
+	if (EnemyHitCheck(player.Position, PlayerWidth) && PlayerHP > 0) PlayerHP--;
 }
 
 
 
 void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 {
+	bool isDead = (PlayerHP <= 0);
+	const char* shape = isDead ? PlayerDeadShape : PlayerShape;
 	unsigned short PlayerColor = 0x0E; //노란색!
+
 	for(int i = 0; i < PlayerWidth; i++)
 	{
-		_BG[player.Position.Y][player.Position.X + i].Text = PlayerShape[i];
+		_BG[player.Position.Y][player.Position.X + i].Text = shape[i];
 		_BG[player.Position.Y][player.Position.X + i].Color = PlayerColor;
 	}
+}
+
+int PlayerGetHP()
+{
+	return PlayerHP;
 }

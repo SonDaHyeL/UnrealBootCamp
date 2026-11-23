@@ -52,11 +52,13 @@ void EnemyDraw(Tile(*_BG)[DF_BG_SIZEX])
 	}
 }
 
-bool EnemyHitCheck(COORD pos) {
+bool EnemyHitCheck(COORD pos, int width) {
 	for (int i = 0; i < MAX_ENEMY; ++i) {
 		if (!enemys[i].Active) continue;
 
-		if (pos.Y == enemys[i].Position.Y && pos.X >= enemys[i].Position.X && pos.X < enemys[i].Position.X + EnemyWidth) {
+		if (pos.Y == enemys[i].Position.Y &&
+			pos.X < enemys[i].Position.X + EnemyWidth &&
+			enemys[i].Position.X < pos.X + width) {
 			enemys[i].Active = false;
 			return true;
 		}

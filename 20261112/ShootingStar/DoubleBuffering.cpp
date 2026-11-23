@@ -29,10 +29,10 @@ void ScreenPrint(Tile(*_BG)[DF_BG_SIZEX])
 	DWORD dw = 0;
 	COORD Pos = { 0,0 }; //덩어리 시작 위치
 	unsigned short TempColor = _BG[0][0].Color; //덩어리 색상
-	char TempBG[(DF_BG_SIZEX * DF_BG_SIZEY) + 1] = {};
+	char TempBG[(DF_BG_SIZEX * DF_SCREEN_SIZEY) + 1] = {};
 	int i = 0;
 
-	for (int y = 0; y < DF_BG_SIZEY; ++y)
+	for (int y = 0; y < DF_SCREEN_SIZEY; ++y)
 	{
 		for (int x = 0; x < DF_BG_SIZEX; ++x)
 		{
@@ -68,7 +68,7 @@ void ScreenClear()
 	DWORD dw = 0;
 	FillConsoleOutputCharacter(
 		g_hScreen[g_ScreenIndex], ' ',
-		DF_BG_SIZEX * DF_BG_SIZEY,
+		DF_BG_SIZEX * DF_SCREEN_SIZEY,
 		COORD(), &dw);
 }
 void ScreenFlipping()

@@ -4,8 +4,17 @@
 #include <cstdlib> //rand 호출 용
 #include <ctime> //rand 호출 용
 
+//게임 화면 크기
 #define DF_BG_SIZEX 200
-#define DF_BG_SIZEY 40
+#define DF_BG_SIZEY 40 
+
+//게임 UI 화면 크기
+#define DF_UI_SIZEY 9
+#define DF_SCREEN_SIZEY (DF_BG_SIZEY + DF_UI_SIZEY)
+
+//플레이어 최대 체력
+#define PLAYER_MAXHP 3
+
 struct Tile
 {
 	char Text;

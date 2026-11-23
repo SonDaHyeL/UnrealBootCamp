@@ -5,9 +5,10 @@
 #include "Player.h"
 #include "Bullet.h"
 #include "Enemy.h"
+#include "UI.h"
 
 
-static Tile BG[DF_BG_SIZEY][DF_BG_SIZEX] = {};
+static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
 
 //초기화
 void Start()
@@ -35,12 +36,15 @@ void Draw()
 	PlayerDraw(BG);
 	BulletDraw(BG);
 	EnemyDraw(BG);
+	UIDraw(BG);
+
+	if (PlayerGetHP() <= 0) { GameOverUI(BG); }
 }
 
 void ClearScreen()
 {
 	unsigned short BaseColor = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN;
-	for (int y = 0; y < DF_BG_SIZEY; ++y)
+	for (int y = 0; y < DF_SCREEN_SIZEY; ++y)
 	{
 		for (int x = 0; x < DF_BG_SIZEX; ++x)
 		{
@@ -66,8 +70,12 @@ int main()
 	while (true) //메인 게임 루프
 	{
 		ClearScreen();
-
-		Update(); //계속 들어옴.
+		if (PlayerGetHP() > 0) {
+			Update(); //계속 들어옴.
+		}
+		else if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+			break; //게임오버 상태에서 ESC키를 누르면 ScreenRelease(); 호출. 게임 종료
+		}
 		Draw();
 		Render();
 		Sleep(16);

@@ -4,4 +4,4 @@
 void EnemySpawn();
 void EnemyUpdate();
 void EnemyDraw(Tile(*_BG)[DF_BG_SIZEX]);
-bool EnemyHitCheck(COORD pos);
+bool EnemyHitCheck(COORD pos, int width = 1);
