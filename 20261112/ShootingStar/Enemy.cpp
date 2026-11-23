@@ -89,7 +89,10 @@ void EBulletFire(COORD pos)
 	for (int i = 0; i < MAX_EBULLET; ++i) {
 		if (!eBullets[i].Active) {
 			eBullets[i].Active = true;
-			eBullets[i].Position = pos;
+			eBullets[i].X = pos.X;
+			eBullets[i].Y = pos.Y;
+			eBullets[i].vx = -1.0f; //왼쪽으로
+			eBullets[i].vy = 0.0f;
 			return;
 		}
 	}
@@ -99,14 +102,17 @@ void EBulletUpdate()
 {
 	for (int i = 0; i < MAX_EBULLET;++i) {
 		if (!eBullets[i].Active) { continue; }
-		eBullets[i].Position.X--;
+		eBullets[i].X += eBullets[i].vx;
+		eBullets[i].Y += eBullets[i].vy;
 
-		if (eBullets[i].Position.X < 0) { 
-			eBullets[i].Active = false; 
+		//게임 영역 밖으로 나가면 활동 종료
+		if (eBullets[i].X < 0 || eBullets[i].X >= DF_BG_SIZEX ||
+			eBullets[i].Y < 0 || eBullets[i].Y >= DF_BG_SIZEY) {
+			eBullets[i].Active = false;
 			continue;
 		}
 
-		if (PlayerHitCheck(eBullets[i].Position)) {
+		if (PlayerHitCheck(BulletCoord(eBullets[i]))) {
 			eBullets[i].Active = false;
 		}
 	}
@@ -116,7 +122,8 @@ void EBulletDraw(Tile(*_BG)[DF_BG_SIZEX])
 {
 	for (int i = 0; i < MAX_EBULLET; ++i) {
 		if (!eBullets[i].Active) { continue; }
-		Tile& t = _BG[eBullets[i].Position.Y][eBullets[i].Position.X];
+		COORD c = BulletCoord(eBullets[i]);
+		Tile& t = _BG[c.Y][c.X];
 		t.Text = '*';
 		t.Color = 0x0C; //밝은 빨강색
 	}

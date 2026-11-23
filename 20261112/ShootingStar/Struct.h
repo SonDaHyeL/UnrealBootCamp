@@ -21,23 +21,26 @@ struct Tile
 	unsigned short Color;
 };
 
-struct Vector {
-	float X;
-	float Y;
-};
 
 typedef struct Transform {
 	COORD Position;
 } Player;
 
 
-struct Bullet {
-	COORD Position;
-	bool Active; //날아가는 중인지 확인하는 용도
-};
-
 struct Enemy {
 	COORD Position;
 	bool Active;
 	ULONGLONG NextFireTick;
 };
+
+
+struct Bullet {
+	float X, Y; //위치 좌표 값
+	float vx, vy; //벡터값. (한 프레임에 움직이는 양. (방향 + 속도) 
+	bool Active; //날아가는 중인지 확인하는 용도
+};
+
+//벡터 값을 정수좌표 값으로 변경
+inline COORD BulletCoord(const Bullet& b) {
+	return { (SHORT)b.X, (SHORT)b.Y };
+}

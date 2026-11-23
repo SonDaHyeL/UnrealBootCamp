@@ -14,6 +14,9 @@ static int NAttackTimer = 0; //잔여 무적시간 프레임 타이머
 static const int NATTACK_FRAME = 45; //무적시간 45프레임(약 1.5초)
 static const int BLINK_INTERVAL = 4; //깜빡임 주기
 
+
+static int ShotLevel = 3; //1: 정면 한 발, 3: 세 갈래 (나중에 아이템으로 올림)
+
 static Player player = {};
 static bool IsKeyDown(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -48,7 +51,13 @@ void PlayerUpdate()
 	// 총알 발사! (키다운시 연사 가능)
 	if (FireCooldown > 0) --FireCooldown;
 	if (IsKeyDown(VK_SPACE) && FireCooldown == 0) {
-		BulletFire({ (SHORT)(player.Position.X + PlayerWidth),player.Position.Y });
+		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth), player.Position.Y }; //총구 위치
+
+		BulletFire(muzzle, 2.0f, 0.0f);        //정면
+		if (ShotLevel >= 3) {
+			BulletFire(muzzle, 2.0f, -0.5f);   //위 대각선
+			BulletFire(muzzle, 2.0f, 0.5f);    //아래 대각선
+		}
 		FireCooldown = 3;
 	}
 
@@ -72,9 +81,7 @@ void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 		PlayerColor = 0x0C;
 	}
 
-
-	const char* shape = isDead ? PlayerDeadShape : PlayerShape;
-	
+	const char* shape = isDead ? PlayerDeadShape : PlayerShape;	
 
 	for(int i = 0; i < PlayerWidth; i++)
 	{
@@ -83,10 +90,8 @@ void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 	}
 }
 
-int PlayerGetHP()
-{
-	return PlayerHP;
-}
+//플레이어 충돌, 피해 판정
+int PlayerGetHP() {	return PlayerHP; }
 
 static void PlayerDamage() {
 	if (PlayerHP > 0) PlayerHP--;
@@ -102,4 +107,13 @@ bool PlayerHitCheck(COORD pos){
 		return true;
 	}
 	return false;
+}
+
+
+
+
+//아이템 등에서 발사 갈래 수 변경 (1 또는 3)
+void PlayerSetShotLevel(int level)
+{
+	ShotLevel = level;
 }
