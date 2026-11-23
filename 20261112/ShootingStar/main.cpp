@@ -4,6 +4,7 @@
 #include "DoubleBuffering.h"
 #include "Player.h"
 #include "Bullet.h"
+#include "Enemy.h"
 
 
 static Tile BG[DF_BG_SIZEY][DF_BG_SIZEX] = {};
@@ -11,6 +12,7 @@ static Tile BG[DF_BG_SIZEY][DF_BG_SIZEX] = {};
 //초기화
 void Start()
 {
+	srand((unsigned)time(NULL)); //새 시드 
 	//10만큼 DF_BG_SIZEY보다 크게 잡아서 UI자리
 	system("mode con:cols=200 lines=50");
 
@@ -25,12 +27,14 @@ void Update()
 {
 	PlayerUpdate();
 	BulletUpdate();
+	EnemyUpdate();
 
 }
 void Draw()
 {
 	PlayerDraw(BG);
 	BulletDraw(BG);
+	EnemyDraw(BG);
 }
 
 void ClearScreen()
