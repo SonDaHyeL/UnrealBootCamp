@@ -86,16 +86,3 @@ void ScreenRelease()
 	CloseHandle(g_hScreen[1]);
 
 }
-
-void PrintUI() {
-	char UI[DF_BG_SIZEX] = {};
-	sprintf_s(UI, "FPS : %d", GetFps());
-	ScreenPrintUI(0, DF_BG_SIZEX + 9, UI);
-}
-
-void ScreenPrintUI(SHORT x, SHORT y, const char* _String) {
-	DWORD dw = 0;
-	COORD Pos = { x,y };
-	SetConsoleCursorPosition(g_hScreen[g_ScreenIndex], Pos);
-	WriteFile(g_hScreen[g_ScreenIndex], _String, strlen(_String), &dw, NULL);
-}

@@ -15,7 +15,7 @@ static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
 void Start()
 {
 	srand((unsigned)time(NULL)); //새 시드 
-	//10만큼 DF_BG_SIZEY보다 크게 잡아서 UI자리
+	//10만큼 DF_BG_SIZEY보다 크게 잡아서 UI자리 넣음
 	system("mode con:cols=200 lines=50");
 
 	ScreenInit();
@@ -79,7 +79,6 @@ int main()
 		else if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
 			break; //게임오버 상태에서 ESC키를 누르면 ScreenRelease(); 호출. 게
 		}
-		PrintUI();
 		Draw();
 		Render();
 		Sleep(16);

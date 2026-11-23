@@ -14,10 +14,16 @@ static int NAttackTimer = 0; //잔여 무적시간 프레임 타이머
 static const int NATTACK_FRAME = 45; //무적시간 45프레임(약 1.5초)
 static const int BLINK_INTERVAL = 4; //깜빡임 주기
 
-
-static int ShotLevel = 3; //1: 정면 한 발, 3: 세 갈래 (나중에 아이템으로 올림)
+//플레이어 레벨 관리
+static int Level = 1;
+static int Exp = 0;
+static const int NeedExp = 30; //레벨업 당 요구 경험치
+static const int MAX_SHOTLINE = 5; //최대 발사 라인 수
 
 static Player player = {};
+static void PlayerDamage();
+
+//플레이어 입출력 및 조작 
 static bool IsKeyDown(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
 }
@@ -50,15 +56,18 @@ void PlayerUpdate()
 
 	// 총알 발사! (키다운시 연사 가능)
 	if (FireCooldown > 0) --FireCooldown;
+
 	if (IsKeyDown(VK_SPACE) && FireCooldown == 0) {
 		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth), player.Position.Y }; //총구 위치
 
-		BulletFire(muzzle, 2.0f, 0.0f);        //정면
-		if (ShotLevel >= 3) {
-			BulletFire(muzzle, 2.0f, -0.5f);   //위 대각선
-			BulletFire(muzzle, 2.0f, 0.5f);    //아래 대각선
+		int lines = min(1 + (Level - 1) / 3, MAX_SHOTLINE);
+		const float GAP = 0.2; //사격 라인 사이 각도 간격
+
+		for (int i = 0; i < lines; ++i) {
+			float vy = (i - (lines - 1) / 2.0f) * GAP; //가운데는 0. 위아래로 대칭 형태 배치
+			BulletFire(muzzle, 2.0f, vy);
 		}
-		FireCooldown = 3;
+		FireCooldown = 3;	
 	}
 
 
@@ -69,7 +78,6 @@ void PlayerUpdate()
 	//무적이 아닐때에만 충돌 감지.
 	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth)) { PlayerDamage();	}
 }
-
 
 void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 {
@@ -109,11 +117,16 @@ bool PlayerHitCheck(COORD pos){
 	return false;
 }
 
+//플레이어 레벨 관리
+int GetPlayerLevel() { return Level; }
+int GetPlayerExp() { return Exp; }
 
+int NeedNextExp() { return Level * NeedExp; } //레벨이 오르면 다음 레벨까지 필요한 경험치 증가
 
-
-//아이템 등에서 발사 갈래 수 변경 (1 또는 3)
-void PlayerSetShotLevel(int level)
-{
-	ShotLevel = level;
+void AddExp(int amount) {
+	Exp += amount;
+	while (Exp >= NeedNextExp()) {
+		Exp -= NeedNextExp();
+		Level++;
+	}
 }

@@ -1,6 +1,9 @@
 ﻿#include "UI.h"
 #include "Player.h"
+#include "TimeManager.h"
 #include <stdio.h>
+#include <cstring>
+
 using namespace std;
 
 static int Score = 0;
@@ -40,6 +43,29 @@ void UIDraw(Tile(*_BG)[DF_BG_SIZEX])
 	for (int i = 0; i < PLAYER_MAXHP; ++i) {
 		DrawString(_BG, 2 + i * 2, top + 4, (i < hp) ? "●" : "○", 0x0c);
 	}
+
+	// Lv.3  [########------------]  50/90
+	char lv[64];
+	sprintf_s(lv, "Lv.%d", GetPlayerLevel());
+	DrawString(_BG, 2, top + 6, lv, 0x0B);   // 밝은 청록
+
+	const int BAR_W = 20;
+	int filled = GetPlayerExp() * BAR_W / NeedNextExp();
+
+	char bar[BAR_W + 3];
+	bar[0] = '[';
+	for (int i = 0; i < BAR_W; ++i) bar[i + 1] = (i < filled) ? '#' : '-';
+	bar[BAR_W + 1] = ']';
+	bar[BAR_W + 2] = '\0';
+	DrawString(_BG, 9, top + 6, bar, 0x0B);
+
+	char expText[32];
+	sprintf_s(expText, "%d/%d", GetPlayerExp(), NeedNextExp());
+	DrawString(_BG, 9 + BAR_W + 3, top + 6, expText, 0x07);
+
+	char fps[32];
+	sprintf_s(fps, "FPS : %d", GetFps());
+	DrawString(_BG, DF_BG_SIZEX - 12, top + 2, fps, 0x08);
 }
 
 void GameOverUI(Tile(*_BG)[DF_BG_SIZEX]) {

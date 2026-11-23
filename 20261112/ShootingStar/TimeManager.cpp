@@ -3,8 +3,8 @@
 
 static ULONGLONG StartTick = GetTickCount64(); //게임 시작 시간
 
-int FPS = 0;
-int FPSCount = 0;
+static int FPS = 0;
+static int FPSCount = 0;
 
 void FPSUpdate()
 {

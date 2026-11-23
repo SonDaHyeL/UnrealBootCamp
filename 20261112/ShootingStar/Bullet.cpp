@@ -1,11 +1,17 @@
-﻿#include "Bullet.h"
+﻿#include "Player.h"
+#include "Bullet.h"
 #include "Enemy.h"
 #include "UI.h"
 #include <cmath> //fabsf, ceilf
 
-#define MAX_BULLET 30 //한 화면에 나올 수 있는 최대 총알 갯수
+#define MAX_BULLET 200 //한 화면에 나올 수 있는 최대 총알 갯수
 static Bullet bullets[MAX_BULLET] = {}; //총알을 미리 만들어두고 시작함 무한 발사를 막기 위함
 
+
+static void EnemyKilled() {
+	ScoreAdd(100);
+	AddExp(10);
+}
 
 //pos 위치에서 (vx, vy) 벡터로 총알 발사
 void BulletFire(COORD pos, float vx, float vy)
@@ -37,7 +43,7 @@ void BulletUpdate()
 		//이동 전에 검사 (적이 총알 쪽으로 다가와 겹친 경우)
 		if (EnemyHitCheck(BulletCoord(b))) {
 			b.Active = false;
-			ScoreAdd(100);
+			EnemyKilled();
 			continue;
 		}
 
@@ -56,7 +62,7 @@ void BulletUpdate()
 			}
 			if (EnemyHitCheck(BulletCoord(b))) {
 				b.Active = false;
-				ScoreAdd(100);
+				EnemyKilled();
 				break;
 			}
 		}
