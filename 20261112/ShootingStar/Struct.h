@@ -21,6 +21,10 @@ struct Tile
 	unsigned short Color;
 };
 
+struct Vector {
+	float X;
+	float Y;
+};
 
 typedef struct Transform {
 	COORD Position;
@@ -35,4 +39,5 @@ struct Bullet {
 struct Enemy {
 	COORD Position;
 	bool Active;
+	ULONGLONG NextFireTick;
 };

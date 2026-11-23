@@ -58,10 +58,7 @@ void PlayerUpdate()
 	if (NAttackTimer > 0) --NAttackTimer;
 	
 	//무적이 아닐때에만 충돌 감지.
-	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth)) {
-		if (PlayerHP > 0) PlayerHP--;
-		NAttackTimer = NATTACK_FRAME;
-	}
+	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth)) { PlayerDamage();	}
 }
 
 
@@ -89,4 +86,20 @@ void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 int PlayerGetHP()
 {
 	return PlayerHP;
+}
+
+static void PlayerDamage() {
+	if (PlayerHP > 0) PlayerHP--;
+	NAttackTimer = NATTACK_FRAME;
+}
+
+bool PlayerHitCheck(COORD pos){
+	if (NAttackTimer > 0 || PlayerHP <= 0) return false;
+	if (pos.Y == player.Position.Y &&
+		pos.X >= player.Position.X &&
+		pos.X < player.Position.X + PlayerWidth) {
+		PlayerDamage();
+		return true;
+	}
+	return false;
 }

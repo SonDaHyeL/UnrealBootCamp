@@ -20,7 +20,7 @@ void Start()
 
 	ScreenInit();
 
-	COORD SpawnPoint = { 10,10 };
+	COORD SpawnPoint = { 10,20 };
 	PlayerStart(SpawnPoint);
 }
 
@@ -30,12 +30,14 @@ void Update()
 	PlayerUpdate();
 	BulletUpdate();
 	EnemyUpdate();
+	EBulletUpdate();
 }
 void Draw()
 {
 	PlayerDraw(BG);
 	BulletDraw(BG);
 	EnemyDraw(BG);
+	EBulletDraw(BG);
 	UIDraw(BG);
 
 	if (PlayerGetHP() <= 0) { GameOverUI(BG); }
