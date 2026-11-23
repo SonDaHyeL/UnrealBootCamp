@@ -10,6 +10,10 @@ static int FireCooldown = 0; //발사 후 남은 대기 프레임
 static int MoveYDelay = 0; //세로 이동 후 남은 대기 프레임
 static int PlayerHP = PLAYER_MAXHP; //플레이어 체력
 
+static int NAttackTimer = 0; //잔여 무적시간 프레임 타이머
+static const int NATTACK_FRAME = 45; //무적시간 45프레임(약 1.5초)
+static const int BLINK_INTERVAL = 4; //깜빡임 주기
+
 static Player player = {};
 static bool IsKeyDown(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -50,16 +54,30 @@ void PlayerUpdate()
 
 
 	//적과 충돌시 체력 감소
-	if (EnemyHitCheck(player.Position, PlayerWidth) && PlayerHP > 0) PlayerHP--;
+	//무적 시간 감소
+	if (NAttackTimer > 0) --NAttackTimer;
+	
+	//무적이 아닐때에만 충돌 감지.
+	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth)) {
+		if (PlayerHP > 0) PlayerHP--;
+		NAttackTimer = NATTACK_FRAME;
+	}
 }
-
 
 
 void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 {
 	bool isDead = (PlayerHP <= 0);
-	const char* shape = isDead ? PlayerDeadShape : PlayerShape;
+
 	unsigned short PlayerColor = 0x0E; //노란색!
+	if (!isDead && NAttackTimer > 0 &&
+		(NAttackTimer / BLINK_INTERVAL) % 2 == 0) {
+		PlayerColor = 0x0C;
+	}
+
+
+	const char* shape = isDead ? PlayerDeadShape : PlayerShape;
+	
 
 	for(int i = 0; i < PlayerWidth; i++)
 	{

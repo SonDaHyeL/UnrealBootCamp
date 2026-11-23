@@ -24,7 +24,7 @@ void EnemySpawn()
 
 void EnemyUpdate()
 {
-	if (++SpawnTimer >= 100) { //20프레임 당 한 개체 생성
+	if (++SpawnTimer >= 50) { //20프레임 당 한 개체 생성
 		SpawnTimer = 0;
 		EnemySpawn();
 	}
