@@ -29,6 +29,10 @@ static bool IsKeyDown(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
 }
 
+static int GetShotLines() {
+	return min(1 + (Level - 1) / 3, MAX_SHOTLINE);
+}
+
 void PlayerStart(COORD pos)
 {
 	player.Position = pos;
@@ -67,7 +71,7 @@ void PlayerUpdate()
 	if (IsKeyDown(VK_SPACE) && FireCooldown == 0) {
 		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth), player.Position.Y }; //총구 위치
 
-		int lines = min(1 + (Level - 1) / 3, MAX_SHOTLINE);
+		int lines = GetShotLines();
 		const float GAP = 0.2f; //사격 라인 사이 각도 간격
 
 		for (int i = 0; i < lines; ++i) {
@@ -132,9 +136,16 @@ int GetPlayerExp() { return Exp; }
 int NeedNextExp() { return Level * NeedExp; } //레벨이 오르면 다음 레벨까지 필요한 경험치 증가
 
 void AddExp(int amount) {
+	int oldLevel = Level;
+	int oldLines = GetShotLines();
+
 	Exp += amount;
 	while (Exp >= NeedNextExp()) {
 		Exp -= NeedNextExp();
 		Level++;
+	}
+
+	if (Level > oldLevel) {
+		LevelUpSpawn({ (SHORT)(player.Position.X + PlayerWidth / 2),player.Position.Y }, GetShotLines() > oldLines);
 	}
 }

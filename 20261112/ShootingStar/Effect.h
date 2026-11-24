@@ -5,3 +5,5 @@ void EffectSpawn(COORD center);
 void EffectUpdate();
 void EffectDraw(Tile(*_BG)[DF_BG_SIZEX]);
 void EffectReset();
+
+void LevelUpSpawn(COORD pos, bool shotUp);
