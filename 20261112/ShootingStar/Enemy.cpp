@@ -1,5 +1,6 @@
 ﻿#include "Bullet.h"
 #include "Enemy.h"
+#include "Effect.h"
 #include "Player.h"
 
 #define MAX_ENEMY 20
@@ -88,6 +89,7 @@ bool EnemyHitCheck(COORD pos, int width) {
 		if (pos.Y == enemys[i].Position.Y &&
 			pos.X < enemys[i].Position.X + EnemyWidth &&
 			enemys[i].Position.X < pos.X + width) {
+			EffectSpawn({ (SHORT)(enemys[i].Position.X + EnemyWidth / 2),enemys[i].Position.Y });
 			enemys[i].Active = false;
 			return true;
 		}

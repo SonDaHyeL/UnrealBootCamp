@@ -53,3 +53,8 @@ struct Star {
 	unsigned short Color;
 };
 
+struct Effect {
+	COORD Center;
+	int Frame;
+	bool Active;
+};

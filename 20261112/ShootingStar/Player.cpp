@@ -1,6 +1,7 @@
 ﻿#include "Player.h"
 #include "Enemy.h"
 #include "Bullet.h"
+#include "Effect.h"
 static const char* PlayerShape = "~(0,0)>>";
 static const char* PlayerDeadShape = "~(X,X)>>";
 static const int PlayerWidth = 8;
@@ -117,6 +118,7 @@ bool PlayerHitCheck(COORD pos){
 	if (pos.Y == player.Position.Y &&
 		pos.X >= player.Position.X &&
 		pos.X < player.Position.X + PlayerWidth) {
+		EffectSpawn(pos);
 		PlayerDamage();
 		return true;
 	}
