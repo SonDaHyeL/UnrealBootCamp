@@ -22,50 +22,142 @@ static void DrawStringCenter(Tile(*_BG)[DF_BG_SIZEX], int y, const char* str, un
 	DrawString(_BG, x, y, str, color);
 }
 
-void UIDraw(Tile(*_BG)[DF_BG_SIZEX])
+static int DisplayScore = 0; //화면에 보이는 점수. 실제 Score를 천천히 따라감
+
+//테두리 박스 + 제목. 안쪽은 건드리지 않음
+static void DrawBox(Tile(*_BG)[DF_BG_SIZEX], int x, int y, int w, int h, const char* title, unsigned short color)
 {
-	int top = DF_BG_SIZEY; 
+	for (int dy = 0; dy < h; ++dy) {
+		for (int dx = 0; dx < w; ++dx) {
+			bool edgeY = (dy == 0 || dy == h - 1);
+			bool edgeX = (dx == 0 || dx == w - 1);
+			if (!edgeY && !edgeX) continue;
 
-	//화면 구분선
-	for (int x = 0; x < DF_BG_SIZEX; x++) {
-		_BG[top][x].Text = '=';
-		_BG[top][x].Color = 0x88;
+			Tile& t = _BG[y + dy][x + dx];
+			t.Text = (edgeY && edgeX) ? '+' : (edgeY ? '-' : '|');
+			t.Color = color;
+		}
 	}
+	char buf[32];
+	sprintf_s(buf, "[ %s ]", title);
+	DrawString(_BG, x + 2, y, buf, 0x0F);
+}
 
-
-	//점수 출력
-	char buf[64];
-	sprintf_s(buf, "점수 : %d", Score);
-	DrawString(_BG, 2, top + 2, buf, 0x0f);
-
-
+//──── HP ────
+static void DrawHP(Tile(*_BG)[DF_BG_SIZEX], int x, int y)
+{
 	int hp = PlayerGetHP();
+	unsigned short color = (hp == PLAYER_MAXHP) ? 0x0A : (hp == 1) ? 0x0C : 0x0E; //초록 / 빨강 / 노랑
+	bool blinkOn = (GetTickCount64() / 250) % 2 == 0; //0.25초 주기
+
+	if (hp == 1 && !blinkOn) color = 0x04; //위험하면 밝은 빨강 <-> 어두운 빨강 깜빡임
+
+	DrawString(_BG, x, y, "HP", 0x07);
 	for (int i = 0; i < PLAYER_MAXHP; ++i) {
-		DrawString(_BG, 2 + i * 2, top + 4, (i < hp) ? "●" : "○", 0x0c);
+		if (i < hp) DrawString(_BG, x + 4 + i * 3, y, "●", color);
+		else        DrawString(_BG, x + 4 + i * 3, y, "○", 0x08);
 	}
 
-	// Lv.3  [########------------]  50/90
-	char lv[64];
-	sprintf_s(lv, "Lv.%d", GetPlayerLevel());
-	DrawString(_BG, 2, top + 6, lv, 0x0B);   // 밝은 청록
+	if (hp == 1)
+		DrawString(_BG, x + 4 + PLAYER_MAXHP * 3 + 1, y, "DANGER!", color);
+}
+
+//──── Lv + EXP 막대 ────
+static void DrawExp(Tile(*_BG)[DF_BG_SIZEX], int x, int y)
+{
+	char lv[16];
+	sprintf_s(lv, "Lv.%-2d", GetPlayerLevel()); //%-2d : 두 자리가 되어도 막대 위치가 밀리지 않게
+	DrawString(_BG, x, y, lv, 0x0B);
 
 	const int BAR_W = 20;
 	int filled = GetPlayerExp() * BAR_W / NeedNextExp();
 
-	char bar[BAR_W + 3];
-	bar[0] = '[';
-	for (int i = 0; i < BAR_W; ++i) bar[i + 1] = (i < filled) ? '#' : '-';
-	bar[BAR_W + 1] = ']';
-	bar[BAR_W + 2] = '\0';
-	DrawString(_BG, 9, top + 6, bar, 0x0B);
+	for (int i = 0; i < BAR_W; ++i) {
+		Tile& t = _BG[y][x + 7 + i];
+		t.Text = ' ';
+		t.Color = (i < filled) ? 0xB0 : 0x80; //앞자리 = 배경색. 배경 하늘색 / 배경 회색
+	}
 
-	char expText[32];
-	sprintf_s(expText, "%d/%d", GetPlayerExp(), NeedNextExp());
-	DrawString(_BG, 9 + BAR_W + 3, top + 6, expText, 0x07);
+	char pct[8];
+	sprintf_s(pct, "%3d%%", GetPlayerExp() * 100 / NeedNextExp()); //%% 는 % 문자 출력
+	DrawString(_BG, x + 7 + BAR_W + 1, y, pct, 0x07);
+}
 
-	char fps[32];
-	sprintf_s(fps, "FPS : %d", GetFps());
-	DrawString(_BG, DF_BG_SIZEX - 12, top + 2, fps, 0x08);
+//──── 큰 숫자 점수 ────
+static const char* BigDigit[10][3] = {
+	{ " _ ", "| |", "|_|" },  // 0
+	{ "   ", "  |", "  |" },  // 1
+	{ " _ ", " _|", "|_ " },  // 2
+	{ " _ ", " _|", " _|" },  // 3
+	{ "   ", "|_|", "  |" },  // 4
+	{ " _ ", "|_ ", " _|" },  // 5
+	{ " _ ", "|_ ", "|_|" },  // 6
+	{ " _ ", "  |", "  |" },  // 7
+	{ " _ ", "|_|", "|_|" },  // 8
+	{ " _ ", "|_|", " _|" },  // 9
+};
+
+static void DrawScore(Tile(*_BG)[DF_BG_SIZEX], int centerX, int y)
+{
+	//롤링 : 남은 차이의 1/8씩 따라감 -> 처음엔 빠르고 끝에선 천천히
+	if (DisplayScore < Score) {
+		int step = (Score - DisplayScore) / 8;
+		DisplayScore += (step > 1) ? step : 1;
+	}
+	bool rolling = (DisplayScore < Score);
+
+	const int DIGITS = 7;
+	const int DIGIT_W = 4; //숫자 3칸 + 간격 1칸
+	char num[16];
+	sprintf_s(num, "%07d", DisplayScore); //앞을 0으로 채운 7자리
+
+	int x = centerX - (DIGITS * DIGIT_W) / 2;
+	bool leadingZero = true;
+
+	for (int i = 0; i < DIGITS; ++i) {
+		int d = num[i] - '0'; //문자 '7' -> 숫자 7
+		if (d != 0 || i == DIGITS - 1) leadingZero = false;
+
+		unsigned short color = leadingZero ? 0x08 : (rolling ? 0x0E : 0x0F);
+		for (int row = 0; row < 3; ++row)
+			DrawString(_BG, x + i * DIGIT_W, y + row, BigDigit[d][row], color);
+	}
+}
+
+//──── SHOT / FPS ────
+static void DrawSystem(Tile(*_BG)[DF_BG_SIZEX], int x, int y)
+{
+	int lines = PlayerGetShotLines();
+	DrawString(_BG, x, y, "SHOT", 0x07);
+	for (int i = 0; i < MAX_SHOTLINE; ++i)
+		DrawString(_BG, x + 6 + i * 2, y, (i < lines) ? ">" : "-", (i < lines) ? 0x0A : 0x08);
+
+	char fps[16];
+	sprintf_s(fps, "FPS  %d", GetFps());
+	DrawString(_BG, x, y + 2, fps, 0x08);
+}
+
+void UIDraw(Tile(*_BG)[DF_BG_SIZEX])
+{
+	int top = DF_BG_SIZEY;
+
+	//화면 구분선
+	for (int x = 0; x < DF_BG_SIZEX; x++) {
+		_BG[top][x].Text = '=';
+		_BG[top][x].Color = 0x08; //0x88은 글자색 = 배경색이라 '='가 안 보였음
+	}
+
+	const int PANEL_Y = top + 1; //41번 줄부터
+	const int PANEL_H = 7;       //41~47번 줄
+
+	DrawBox(_BG,  1, PANEL_Y, 36, PANEL_H, "PILOT",  0x03);
+	DrawBox(_BG, 38, PANEL_Y, 44, PANEL_H, "SCORE",  0x06);
+	DrawBox(_BG, 83, PANEL_Y, 36, PANEL_H, "SYSTEM", 0x08);
+
+	DrawHP    (_BG, 4, PANEL_Y + 2);
+	DrawExp   (_BG, 4, PANEL_Y + 4);
+	DrawScore (_BG, 38 + 44 / 2, PANEL_Y + 2); //SCORE 패널의 가운데
+	DrawSystem(_BG, 86, PANEL_Y + 2);
 }
 
 void GameOverUI(Tile(*_BG)[DF_BG_SIZEX]) {
@@ -94,7 +186,7 @@ void GameOverUI(Tile(*_BG)[DF_BG_SIZEX]) {
 	DrawStringCenter(_BG, top + 5, "ENTER : 타이틀로    ESC : 종료", 0x07);
 }
 
-void ScoreReset() { Score = 0; }
+void ScoreReset() { Score = 0; DisplayScore = 0; }
 
 
 //메인 화면 UI

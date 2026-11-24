@@ -14,6 +14,8 @@
 
 //플레이어 최대 체력
 #define PLAYER_MAXHP 3
+//최대 발사 라인 수
+#define MAX_SHOTLINE 5
 
 struct Tile
 {

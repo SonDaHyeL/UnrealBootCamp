@@ -19,7 +19,7 @@ static const int BLINK_INTERVAL = 4; //깜빡임 주기
 static int Level = 1;
 static int Exp = 0;
 static const int NeedExp = 30; //레벨업 당 요구 경험치
-static const int MAX_SHOTLINE = 5; //최대 발사 라인 수
+//MAX_SHOTLINE(최대 발사 라인 수)은 UI에서도 쓰기 위해 Struct.h로 이동
 
 static Player player = {};
 static void PlayerDamage();
@@ -32,6 +32,8 @@ static bool IsKeyDown(int vk) {
 static int GetShotLines() {
 	return min(1 + (Level - 1) / 3, MAX_SHOTLINE);
 }
+
+int PlayerGetShotLines() { return GetShotLines(); } //UI 표시용
 
 void PlayerStart(COORD pos)
 {
