@@ -8,10 +8,10 @@
 
 //R"B( ... )B" : 그림 안에 ) 와 \ 가 많아서 구분자 B를 붙인 raw string 사용
 static const char* BossShape[] = {
-	R"B(    /\_            _/\)B",
+	R"B(    /\_          _/\)B",
 	R"B(   /   \___^\___/    \)B",
 	R"B(  (                    ))B",
-	R"B( (     o   ____   o     ))B",
+	R"B( (     o    __    o     ))B",
 	R"B( (          \/          ))B",
 	R"B(  (                    ))B",
 	R"B(     \__/\__/\__/\__/)B",
