@@ -8,3 +8,4 @@ bool EnemyHitCheck(COORD pos, int width = 1);
 
 void EnemyReset();
 
+bool EnemyBulletHit(COORD pos);

@@ -8,6 +8,7 @@ using namespace std;
 
 static int Score = 0;
 
+int GetScore() { return Score; }
 void ScoreAdd(int amount){	Score += amount; }
 
 static void DrawString(Tile(*_BG)[DF_BG_SIZEX], int x, int y, const char* str, unsigned short color) {

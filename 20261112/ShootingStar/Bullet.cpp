@@ -24,10 +24,7 @@ void BulletReset() {
 static bool BulletHitCheck(Bullet& b) {
 	COORD c = BulletCoord(b);
 	if (b.Owner == PTEAM) {
-		if (EnemyHitCheck(c)) { 
-			EnemyKilled();
-			return true;
-		}
+		if (EnemyBulletHit(c)) return true;
 	}
 	else {
 		if (PlayerHitCheck(c))

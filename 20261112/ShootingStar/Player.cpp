@@ -2,10 +2,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Effect.h"
-static const char* PlayerShape = "~(0,0)>>";
-static const char* PlayerDeadShape = "~(X,X)>>";
-static const int PlayerWidth = 8;
-
+#include <cstring>
 
 static int FireCooldown = 0; //발사 후 남은 대기 프레임
 static int MoveYDelay = 0; //세로 이동 후 남은 대기 프레임
@@ -33,6 +30,22 @@ static int GetShotLines() {
 	return min(1 + (Level - 1) / 3, MAX_SHOTLINE);
 }
 
+static const char* PlayerShape[MAX_SHOTLINE] = {
+	"~(0,0)>>",
+	"~(0,0)=>>",
+	"~=(0,0)=>>",
+	"~=[(0,0)]=>>",
+	"<~=[(0,0)]=>>>",
+};
+
+static const char* CurrentShape() {
+	return PlayerShape[GetShotLines() - 1];
+}
+
+static int PlayerWidth() {
+	return (int)strlen(CurrentShape());
+}
+
 int PlayerGetShotLines() { return GetShotLines(); } //UI 표시용
 
 void PlayerStart(COORD pos)
@@ -51,7 +64,7 @@ void PlayerUpdate()
 	//새로운 키 입력 방식!
 	// 가로 이동 : 매 프레임당 1칸 이동
 	if (IsKeyDown(VK_LEFT) && player.Position.X > 0) player.Position.X--;
-	if (IsKeyDown(VK_RIGHT) && player.Position.X < DF_BG_SIZEX - PlayerWidth) player.Position.X++;
+	if (IsKeyDown(VK_RIGHT) && player.Position.X < DF_BG_SIZEX - PlayerWidth()) player.Position.X++;
 
 
 	// 세로 이동 : 2프레임에 1칸 (콘솔 글자 한 칸은 가로보다 세로가 약 2배 길기 때문에 가로와 같은 속도면 차이가 많이 나 보임)
@@ -71,7 +84,7 @@ void PlayerUpdate()
 	if (FireCooldown > 0) --FireCooldown;
 
 	if (IsKeyDown(VK_SPACE) && FireCooldown == 0) {
-		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth), player.Position.Y }; //총구 위치
+		COORD muzzle = { (SHORT)(player.Position.X + PlayerWidth()), player.Position.Y }; //총구 위치
 
 		int lines = GetShotLines();
 		const float GAP = 0.2f; //사격 라인 사이 각도 간격
@@ -89,24 +102,21 @@ void PlayerUpdate()
 	if (NAttackTimer > 0) --NAttackTimer;
 	
 	//무적이 아닐때에만 충돌 감지.
-	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth)) { PlayerDamage();	}
+	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth())) { PlayerDamage();	}
 }
 
 void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
 {
 	bool isDead = (PlayerHP <= 0);
-
 	unsigned short PlayerColor = 0x0E; //노란색!
-	if (!isDead && NAttackTimer > 0 &&
-		(NAttackTimer / BLINK_INTERVAL) % 2 == 0) {
-		PlayerColor = 0x0C;
-	}
+	
+	const char* shape = CurrentShape();
+	int w = PlayerWidth();
 
-	const char* shape = isDead ? PlayerDeadShape : PlayerShape;	
-
-	for(int i = 0; i < PlayerWidth; i++)
-	{
-		_BG[player.Position.Y][player.Position.X + i].Text = shape[i];
+	for (int i = 0; i < w; i++) {
+		char c = shape[i];
+		if (isDead && c == '0') c = 'X';
+		_BG[player.Position.Y][player.Position.X + i].Text = c;
 		_BG[player.Position.Y][player.Position.X + i].Color = PlayerColor;
 	}
 }
@@ -123,7 +133,7 @@ bool PlayerHitCheck(COORD pos){
 	if (NAttackTimer > 0 || PlayerHP <= 0) return false;
 	if (pos.Y == player.Position.Y &&
 		pos.X >= player.Position.X &&
-		pos.X < player.Position.X + PlayerWidth) {
+		pos.X < player.Position.X + PlayerWidth()) {
 		EffectSpawn(pos);
 		PlayerDamage();
 		return true;
@@ -148,6 +158,8 @@ void AddExp(int amount) {
 	}
 
 	if (Level > oldLevel) {
-		LevelUpSpawn({ (SHORT)(player.Position.X + PlayerWidth / 2),player.Position.Y }, GetShotLines() > oldLines);
+		int maxX = DF_BG_SIZEX - PlayerWidth();
+		if (player.Position.X > maxX) player.Position.X = (SHORT)maxX;
+		LevelUpSpawn({ (SHORT)(player.Position.X + PlayerWidth() / 2),player.Position.Y }, GetShotLines() > oldLines);
 	}
 }

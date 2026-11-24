@@ -29,6 +29,12 @@ enum Team {
 	ETEAM
 };
 
+enum EnemyType {
+	ENEMY_NOMAL,
+	ENEMY_GUNNER,
+	ENEMY_TYPE_COUNT
+};
+
 typedef struct Transform {
 	COORD Position;
 } Player;
@@ -38,6 +44,10 @@ struct Enemy {
 	COORD Position;
 	bool Active;
 	ULONGLONG NextFireTick;
+	EnemyType Type;
+	int HP;
+	int MoveTimer; // 적마다 속도가 달라서 각자 타이머를 가짐 (전역 MoveDelay 대용)
+	int HitFlash;  // 맞았을 때 하얗게 번쩍이는 남은 프레임
 };
 
 struct Bullet {
@@ -65,3 +75,4 @@ struct Effect {
 	int Frame;
 	bool Active;
 };
+
