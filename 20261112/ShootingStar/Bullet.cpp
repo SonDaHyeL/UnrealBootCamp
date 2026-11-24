@@ -2,6 +2,7 @@
 #include "Bullet.h"
 #include "Enemy.h"
 #include "UI.h"
+#include "Boss.h"
 #include <cmath> //fabsf, ceilf
 
 #define MAX_BULLET 300 //한 화면에 나올 수 있는 최대 총알 갯수
@@ -24,6 +25,7 @@ void BulletReset() {
 static bool BulletHitCheck(Bullet& b) {
 	COORD c = BulletCoord(b);
 	if (b.Owner == PTEAM) {
+		if (BossBulletHit(c)) return true;
 		if (EnemyBulletHit(c)) return true;
 	}
 	else {

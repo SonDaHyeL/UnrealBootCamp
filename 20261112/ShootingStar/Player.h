@@ -14,3 +14,6 @@ int GetPlayerLevel();
 int GetPlayerExp();
 int NeedNextExp();
 void AddExp(int amount);
+
+//보스 유도탄 위해 플레이어 위치를 찾아옴
+COORD PlayerGetPosition();

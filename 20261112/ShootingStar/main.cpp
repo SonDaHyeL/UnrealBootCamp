@@ -9,6 +9,7 @@
 #include "TimeManager.h"
 #include "Background.h"
 #include "Effect.h"
+#include "Boss.h"
 
 static Tile BG[DF_SCREEN_SIZEY][DF_BG_SIZEX] = {};
 
@@ -42,6 +43,7 @@ void GameReset() {
 	EnemyReset();
 	ScoreReset();
 	EffectReset();
+	BossReset();
 }
 
 void Update()
@@ -50,6 +52,7 @@ void Update()
 	PlayerUpdate();
 	BulletUpdate();
 	EnemyUpdate();
+	BossUpdate();
 	EffectUpdate();
 }
 void Draw()
@@ -58,6 +61,7 @@ void Draw()
 	PlayerDraw(BG);
 	BulletDraw(BG);
 	EnemyDraw(BG);
+	BossDraw(BG);
 	EffectDraw(BG);
 	UIDraw(BG);
 }

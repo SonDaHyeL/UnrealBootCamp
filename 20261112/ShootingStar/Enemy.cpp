@@ -2,6 +2,7 @@
 #include "Enemy.h"
 #include "Effect.h"
 #include "Player.h"
+#include "Boss.h"
 #include "UI.h"
 #include <cstring>
 
@@ -85,7 +86,7 @@ static void EnemyFire(const Enemy& e) {
 
 
 void EnemyUpdate() {
-	if (++SpawnTimer >= 20) {
+	if (!BossIsActive() && ++SpawnTimer >= 20) {
 		SpawnTimer = 0;
 		EnemySpawn();
 	}

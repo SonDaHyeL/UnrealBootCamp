@@ -13,7 +13,7 @@
 #define DF_SCREEN_SIZEY (DF_BG_SIZEY + DF_UI_SIZEY)
 
 //플레이어 최대 체력
-#define PLAYER_MAXHP 3
+#define PLAYER_MAXHP 5
 //최대 발사 라인 수
 #define MAX_SHOTLINE 5
 

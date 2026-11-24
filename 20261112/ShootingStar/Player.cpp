@@ -2,6 +2,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Effect.h"
+#include "Boss.h"
 #include <cstring>
 
 static int FireCooldown = 0; //발사 후 남은 대기 프레임
@@ -20,6 +21,7 @@ static const int NeedExp = 30; //레벨업 당 요구 경험치
 
 static Player player = {};
 static void PlayerDamage();
+COORD PlayerGetPosition() { return player.Position; }
 
 //플레이어 입출력 및 조작 
 static bool IsKeyDown(int vk) {
@@ -102,7 +104,10 @@ void PlayerUpdate()
 	if (NAttackTimer > 0) --NAttackTimer;
 	
 	//무적이 아닐때에만 충돌 감지.
-	if (NAttackTimer == 0 && EnemyHitCheck(player.Position, PlayerWidth())) { PlayerDamage();	}
+	if (NAttackTimer == 0 &&
+		(EnemyHitCheck(player.Position, PlayerWidth()) || BossBodyHit(player.Position, PlayerWidth()))) {
+		PlayerDamage();
+	}
 }
 
 void PlayerDraw(Tile(*_BG)[DF_BG_SIZEX])
@@ -163,3 +168,4 @@ void AddExp(int amount) {
 		LevelUpSpawn({ (SHORT)(player.Position.X + PlayerWidth() / 2),player.Position.Y }, GetShotLines() > oldLines);
 	}
 }
+
