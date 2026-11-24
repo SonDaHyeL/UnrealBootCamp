@@ -4,8 +4,10 @@
 #include "UI.h"
 #include <cmath> //fabsf, ceilf
 
-#define MAX_BULLET 200 //한 화면에 나올 수 있는 최대 총알 갯수
+#define MAX_BULLET 300 //한 화면에 나올 수 있는 최대 총알 갯수
 static Bullet bullets[MAX_BULLET] = {}; //총알을 미리 만들어두고 시작함 무한 발사를 막기 위함
+
+
 
 
 static void EnemyKilled() {
@@ -19,8 +21,23 @@ void BulletReset() {
 	}
 }
 
+static bool BulletHitCheck(Bullet& b) {
+	COORD c = BulletCoord(b);
+	if (b.Owner == PTEAM) {
+		if (EnemyHitCheck(c)) { 
+			EnemyKilled();
+			return true;
+		}
+	}
+	else {
+		if (PlayerHitCheck(c))
+			return true;
+	}
+	return false;
+}
+
 //pos 위치에서 (vx, vy) 벡터로 총알 발사
-void BulletFire(COORD pos, float vx, float vy)
+void BulletFire(COORD pos, float vx, float vy, Team owner)
 {
 	for (int i = 0; i < MAX_BULLET; ++i) {
 		if (!bullets[i].Active) {
@@ -29,6 +46,7 @@ void BulletFire(COORD pos, float vx, float vy)
 			bullets[i].Y = pos.Y;
 			bullets[i].vx = vx;
 			bullets[i].vy = vy;
+			bullets[i].Owner = owner;
 			return;
 		}
 	}
@@ -47,9 +65,8 @@ void BulletUpdate()
 		if (!b.Active) continue;
 
 		//이동 전에 검사 (적이 총알 쪽으로 다가와 겹친 경우)
-		if (EnemyHitCheck(BulletCoord(b))) {
+		if (BulletHitCheck(b)) {
 			b.Active = false;
-			EnemyKilled();
 			continue;
 		}
 
@@ -66,9 +83,8 @@ void BulletUpdate()
 				b.Active = false; //화면 밖으로 나가면 활동 종료
 				break;
 			}
-			if (EnemyHitCheck(BulletCoord(b))) {
+			if (BulletHitCheck(b)) {
 				b.Active = false;
-				EnemyKilled();
 				break;
 			}
 		}
@@ -84,6 +100,6 @@ void BulletDraw(Tile(*_BG)[DF_BG_SIZEX])
 		Tile& t = _BG[c.Y][c.X];
 
 		t.Text = '*';
-		t.Color = 0x0A; //밝은 초록색
+		t.Color = (bullets[i].Owner == PTEAM) ? 0x0A : 0x0C;
 	}
 }

@@ -4,9 +4,7 @@
 #include "Player.h"
 
 #define MAX_ENEMY 20
-#define MAX_EBULLET 30
 static Enemy enemys[MAX_ENEMY] = {};
-static Bullet eBullets[MAX_EBULLET] = {};
 
 static const char* EnemyShape = "<=O";
 static const int EnemyWidth = 3;
@@ -18,9 +16,7 @@ void EnemyReset() {
 	for (int i = 0; i < MAX_ENEMY; ++i) {
 		enemys[i].Active = false;
 	}
-	for (int i = 0; i < MAX_EBULLET; ++i) {
-		eBullets[i].Active = false;
-	}
+	
 	SpawnTimer = 0;
 	MoveDelay = 0;
 }
@@ -51,7 +47,7 @@ void EnemyUpdate()
 		if (!enemys[i].Active) continue;
 
 		if (now >= enemys[i].NextFireTick) {
-			EBulletFire({ (SHORT)(enemys[i].Position.X - 1),enemys[i].Position.Y });
+			BulletFire({ (SHORT)(enemys[i].Position.X - 1),enemys[i].Position.Y }, -1.0f, 0.0f, ETEAM);
 			enemys[i].NextFireTick = now + 3000;
 		}
 	}
@@ -97,47 +93,4 @@ bool EnemyHitCheck(COORD pos, int width) {
 	return false;
 }
 
-void EBulletFire(COORD pos)
-{
-	for (int i = 0; i < MAX_EBULLET; ++i) {
-		if (!eBullets[i].Active) {
-			eBullets[i].Active = true;
-			eBullets[i].X = pos.X;
-			eBullets[i].Y = pos.Y;
-			eBullets[i].vx = -1.0f; //왼쪽으로
-			eBullets[i].vy = 0.0f;
-			return;
-		}
-	}
-}
 
-void EBulletUpdate()
-{
-	for (int i = 0; i < MAX_EBULLET;++i) {
-		if (!eBullets[i].Active) { continue; }
-		eBullets[i].X += eBullets[i].vx;
-		eBullets[i].Y += eBullets[i].vy;
-
-		//게임 영역 밖으로 나가면 활동 종료
-		if (eBullets[i].X < 0 || eBullets[i].X >= DF_BG_SIZEX ||
-			eBullets[i].Y < 0 || eBullets[i].Y >= DF_BG_SIZEY) {
-			eBullets[i].Active = false;
-			continue;
-		}
-
-		if (PlayerHitCheck(BulletCoord(eBullets[i]))) {
-			eBullets[i].Active = false;
-		}
-	}
-}
-
-void EBulletDraw(Tile(*_BG)[DF_BG_SIZEX])
-{
-	for (int i = 0; i < MAX_EBULLET; ++i) {
-		if (!eBullets[i].Active) { continue; }
-		COORD c = BulletCoord(eBullets[i]);
-		Tile& t = _BG[c.Y][c.X];
-		t.Text = '*';
-		t.Color = 0x0C; //밝은 빨강색
-	}
-}

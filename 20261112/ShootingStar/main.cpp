@@ -50,7 +50,6 @@ void Update()
 	PlayerUpdate();
 	BulletUpdate();
 	EnemyUpdate();
-	EBulletUpdate();
 	EffectUpdate();
 }
 void Draw()
@@ -59,7 +58,6 @@ void Draw()
 	PlayerDraw(BG);
 	BulletDraw(BG);
 	EnemyDraw(BG);
-	EBulletDraw(BG);
 	EffectDraw(BG);
 	UIDraw(BG);
 }

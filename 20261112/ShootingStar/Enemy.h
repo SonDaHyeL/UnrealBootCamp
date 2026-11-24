@@ -8,8 +8,3 @@ bool EnemyHitCheck(COORD pos, int width = 1);
 
 void EnemyReset();
 
-//적 총알 발사
-
-void EBulletFire(COORD pos);
-void EBulletUpdate();
-void EBulletDraw(Tile(*_BG)[DF_BG_SIZEX]);

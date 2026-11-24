@@ -76,7 +76,7 @@ void PlayerUpdate()
 
 		for (int i = 0; i < lines; ++i) {
 			float vy = (i - (lines - 1) / 2.0f) * GAP; //가운데는 0. 위아래로 대칭 형태 배치
-			BulletFire(muzzle, 2.0f, vy);
+			BulletFire(muzzle, 2.0f, vy, PTEAM);
 		}
 		FireCooldown = 3;	
 	}
