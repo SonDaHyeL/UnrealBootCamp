@@ -33,12 +33,6 @@ const ITEM& Inventory::Get(int idx) const {
 	return slots[idx];
 }
 
-void Inventory::Show() const {
-	for (int i = 0; i < INVEN_SIZE; i++) {
-		cout << (i + 1) << "." << slots[i].GetName() << endl;
-	}
-}
-
 void Inventory::SetSlot(int idx, ITEMLIST id) {
 	if (!IsValidIndex(idx)) return;
 	slots[idx].ItemID = id;

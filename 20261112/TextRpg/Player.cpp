@@ -1,6 +1,6 @@
 ﻿#include "Player.h"
-#include "Input.h"
-#include <iostream>
+#include "UI.h"
+
 
 using namespace std;
 
@@ -33,50 +33,43 @@ void Player::Init() {
 }
 
 void Player::ShowInfo() const {
-	system("cls");
-	cout << "\n------------------------\n";
-
-	cout << " > 플레이어 이름(LV." << level << ") : " << name << endl;
-	cout << " > 직업 : " << jobName << endl;
-	cout << " > HP (최대/현재) : " << GetMaxHp() << " / " << hp << endl;
-	cout << " > 공격력 : " << GetAttack() << endl;
-	cout << " > 방어력 : " << GetDefense() << endl;
-	cout << " :: 소지금 : " << gold << "G ::" << endl;
-
-	cout << endl << " >> 다음 LV까지 " << GetNeedExp() - exp << "필요!" << endl;
+	UI::Log("");
+	UI::Log(":: " + name + " [" + jobName + "] ::");
+	UI::Log(" > 레벨 : " + to_string(level) + "  (다음 LV까지 " + to_string(GetNeedExp() - exp) + " 필요)");
+	UI::Log(" > HP : " + to_string(hp) + " / " + to_string(GetMaxHp()));
+	UI::Log(" > 공격력 : " + to_string(GetAttack()) + "  방어력 : " + to_string(GetDefense()));
+	UI::Log(" > 소지금 : " + to_string(gold) + "G");
+	UI::Log(" > 퀘스트 : " + string(quest ? "진행 중" : "없음"));
 }
 
 void Player::Create() {
-	cout << ">> 당신의 이름을 입력하세요.\n>";
-	cin >> name;
+	UI::Log("");
+	UI::Log(">> 당신의 이름을 입력하세요.");
+	name = UI::AskText(*this, " 이름 > ");
 
-	cout << "\n>> 당신의 직업을 선택하세요.\n";
-	cout << " 1.전사\n 2.궁수\n 3.도적\n 4.마법사\n";
-	while (1) {
-		job = Select();
-		if (job >= 1 && job <= 4) { Init(); return; }
-		cout << " <!> 잘못된 입력입니다! \n";
-	}
+	UI::Log(">> " + name + "님, 당신의 직업을 선택하세요.");
+	job = UI::Menu(*this, { "전사", "궁수", "도적", "마법사" });   // 1~4만 돌아옴 → while 불필요
+	Init();
+
+	UI::Log(">> [" + jobName + "] " + name + "의 모험이 시작됩니다!");
 }
 
 void Player::AddExp(int amount) {
 	exp += amount;
-	cout << " >> " << amount << " 경험치 획득! (" << exp << "/" << GetNeedExp() << ")\n";
+	UI::Log(" >> " + to_string(amount) + " 경험치 획득! (" + to_string(exp) + "/" + to_string(GetNeedExp()) + ")");
 
 	while (exp >= GetNeedExp()) {
 		exp -= GetNeedExp();
 
 		if (level + 1 > MAX_LEVEL) {
-			cout << ">> 이미 최대 레벨입니다!" << endl;
-			cout << ":: 레벨 초과 보너스 보상 : 20G :: " << endl;
+			UI::Log(">> 이미 최대 레벨입니다! :: 레벨 초과 보너스 보상 : 20G ::");
 			AddGold(20);
 			continue;
 		}
 
 		level++;
 		hp = GetMaxHp();
-		cout << "=======★ Level UP!!! ★======= " << endl;
-		cout << ">> LV " << level - 1 << " -> LV " << level << endl;
+		UI::Log("=======★ Level UP!!! ★======= LV " + to_string(level - 1) + " -> LV " + to_string(level));
 	}
 }
 

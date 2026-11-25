@@ -1,6 +1,7 @@
 ﻿#ifndef GAME_H
 #define GAME_H
 
+#include "UI.h"
 #include "Player.h"
 
 class Game {
@@ -29,6 +30,7 @@ private:
 	void TalkToChief();
 	void BuyMenu();
 	void SellMenu();
+	void InvenMenu();
 
 	//게임이 플레이어를 소유함
 	Player player;

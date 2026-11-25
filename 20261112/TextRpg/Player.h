@@ -31,6 +31,7 @@ public:
 	
 	//***캐릭터 정보 조회***
 	int GetLevel() const { return level; }
+	const std::string& GetJobName() const { return jobName; }
 	int GetGold() const { return gold; }
 	int GetAttack() const override { return attack + growAtk * (level - 1); } //레벨에 따른 공격력 계산 
 	int GetDefense() const override { return defense + growDef * (level - 1); } //레벨에 따른 방어력 계산

@@ -82,7 +82,6 @@ struct ITEM {
 
 //인벤토리 유틸리티
 int SelectInvenSlot(Player& player);
-void ShowInven(Player& player);
 
 //인벤토리 추가 삭제
 void GetItem(Player& player, ITEMLIST ItemID);
@@ -95,8 +94,6 @@ int SellItem(Player& player, int idx);
 //아이템 사용
 bool UseItem(Player& player, int idx);
 void DropItemAt(Player& player, int idx);
-void ItemMeun(Player& player, int idx);
-void InvenMenu(Player& player, int idx);
 
 
 

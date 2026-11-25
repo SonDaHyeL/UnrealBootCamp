@@ -1,8 +1,7 @@
-﻿#include <iostream>
-#include <random>
+﻿#include <random>
 #include <algorithm>
 #include <string>
-#include "Input.h"
+#include "UI.h"
 #include "Battle.h"
 
 using namespace std;
@@ -59,87 +58,57 @@ namespace {
 	}
 
 	// 공격 결과를 출력.
-	void Attack(const Character& attacker, Character& target, int defenseMul = 1) { //attacker -> target 공격. defenseMul은 방어자세(2)
+	void Attack(const Character& attacker, Character& target, int defenseMul = 1) {
 		DamageResult r = CalcDamage(attacker.GetAttack(), target.GetDefense() * defenseMul);
-		cout << attacker.GetName() << "의 공격! ";
 		if (r.miss) {
-			cout << target.GetName() << "이/가 공격을 피했습니다!" << endl;
+			UI::Log(attacker.GetName() + "의 공격! " + target.GetName() + "이/가 공격을 피했습니다!");
 			return;
 		}
-		if (r.critical) { cout << "치명타! "; }
-		cout << target.GetName() << "에게 " << r.damage << "의 데미지를 주었습니다." << endl;
+		UI::Log(attacker.GetName() + "의 공격! " + (r.critical ? "치명타! " : "")
+			+ target.GetName() + "에게 " + to_string(r.damage) + "의 데미지를 주었습니다.");
 		target.TakeDamage(r.damage);
 	}
 }
 
 
 void Fight(Player& player, Enemy& enemy) {
-	int input = 0;
-	while (!player.IsDead() && !enemy.IsDead()) {
-		system("cls");
-		cout << "\n------------------------\n";
-		cout << "      !!! 전투 !!!      \n";
-		cout << "------------------------\n";
-		cout << player.GetName() << "의 HP (잔여/최대) :" << player.GetHp() << "/" << player.GetMaxHp() << endl;
-		cout << enemy.GetName() << "의 HP :" << enemy.GetHp() << endl;
-		cout << " 1.공격한다.\n";
-		cout << " 2.방어한다.\n";
-		cout << " 3.도망간다.\n\n\n";
+	UI::SetTitle("전 투");
+	UI::ClearLog();
+	UI::Log(enemy.GetName() + "이/가 나타났습니다!");
 
-		input = Select();
+	while (!player.IsDead() && !enemy.IsDead()) {
+		int input = UI::Menu(player, { "공격한다", "방어한다", "도망간다" }, 1, &enemy);
+		UI::Log("");                               // 턴 구분용 빈 줄
 		switch (input) {
 		case 1:
-			cout << "------------------------\n";
 			Attack(player, enemy);
-			if (enemy.IsDead()) {
-				cout << enemy.GetName() << "이/가 쓰러졌습니다!\n";
-				cout << "> 이겼다!\n ";
-				player.AddExp(enemy.GetDropExp());
-				GetItem(player, enemy.GetDropItem());
-				system("pause"); 
-				break;
-			}
-			Attack(enemy, player);
-			system("pause");
+			if (!enemy.IsDead()) Attack(enemy, player);
 			break;
 		case 2:
-			cout << "------------------------\n";
-			cout << player.GetName() << "은/는 방어 자세를 취했습니다! (방어력 2배)" << endl;
+			UI::Log(player.GetName() + "은/는 방어 자세를 취했습니다! (방어력 2배)");
 			Attack(enemy, player, 2);
-			system("pause");
 			break;
 		case 3:
-			cout << "------------------------\n";
-			cout << "\n> 당신은 도망쳤습니다...\n";
-			cout << "> 이런...\n ";
-			system("pause");
+			UI::Log("> 당신은 도망쳤습니다... 이런...");
 			return;
 		}
 	}
 
 	if (player.IsDead()) {
-		cout << "------------------------\n";
-		cout << "\n>> 당신은 쓰러졌습니다...\n";
-		cout << "> 이런...\n";
-		system("pause");
+		UI::Log(">> 당신은 쓰러졌습니다...");
 		return;
 	}
 
-	system("cls");
-	cout << "\n------------------------\n";
-	cout << "     :: 전투 종료! ::     \n";
-	cout << "------------------------\n";
+	UI::Log(enemy.GetName() + "이/가 쓰러졌습니다! > 이겼다!");
+	player.AddExp(enemy.GetDropExp());
+	GetItem(player, enemy.GetDropItem());
 
-	if (enemy.GetName() == "슬라임" && enemy.IsDead() && player.HasQuest()) {
-		cout << "\n------------------------\n";
-		cout << "    :: 퀘스트 성공! ::    \n";
-		cout << "------------------------\n";
-		cout << "사냥터를 어지럽히는 슬라임을 잡자!(1/1)\n\n";
-		cout << "\n\n >> 퀘스트 완료 보상으로 10골드를 얻었습니다!\n";
+	if (enemy.GetName() == "슬라임" && player.HasQuest()) {
+		UI::Log("");
+		UI::Log(":: 퀘스트 성공! :: 사냥터를 어지럽히는 슬라임을 잡자! (1/1)");
+		UI::Log(">> 퀘스트 완료 보상으로 10골드를 얻었습니다!");
 		player.AddGold(10);
 		player.CompleteQuest();
 	}
-	printf("> 야호!\n");
-	system("pause");
-	return;
+	UI::Log("> 야호!");
 }
