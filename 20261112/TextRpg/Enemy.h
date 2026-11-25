@@ -3,16 +3,26 @@
 
 #include <string>
 #include "Object.h"
+#include "Character.h"
 
-struct Enemy {
-	std::string eName = "";
+class Enemy : public Character {
+private:
 	int attack = 0;
 	int defense = 0;
-	int hp = 0;
+	int maxHp = 0;
 	ITEMLIST dropItem = noItem;
 	int dropExp = 0;
 
-	void Init(int input);
+public:
+	void Init(int type);
+
+	int GetAttack() const override { return attack; }
+	int GetDefense() const override { return defense; }
+	int GetMaxHp() const override { return maxHp; }
+
+	ITEMLIST GetDropItem() const { return dropItem; }
+	int GetDropExp() const { return dropExp; }
+
 };
 
 #endif // !ENEMY_H

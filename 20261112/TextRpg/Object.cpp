@@ -1,16 +1,10 @@
-﻿#include "Game.h"
+﻿#include "Input.h"
+#include "Player.h"
 #include <iostream>
 using namespace std;
 
 
 // ::인벤토리:: 기본 조작
-int FindEmptySlot(const Player& player) { //인벤토리 빈 자리 판단
-	for (int i = 0; i < INVEN_SIZE; ++i) {
-		if (player.inven[i].IsEmpty()) return i;
-	}
-	return -1; //빈자리 없다
-}
-
 int SelectInvenSlot(Player& player) { //인벤토리 슬롯 내 선택
 	ShowInven(player);
 	cout << ">> 인벤토리 슬롯을 선택하세요. (0: 취소)\n";
@@ -22,43 +16,28 @@ int SelectInvenSlot(Player& player) { //인벤토리 슬롯 내 선택
 		return -1;
 	}
 	int idx = input - 1;
-	if (player.inven[idx].IsEmpty()) {
+	if (player.GetInven().IsEmptyAt(idx)) {
 		cout << " >> 빈 칸입니다." << endl;
 		return -1;
 	}
 	return idx;
 }
-
 void ShowInven(Player& player) { //인벤토리 출력하기 
 	system("cls");
 	cout << " ====== INVENTORY ======" << endl;
-	for (int i = 0; i < INVEN_SIZE; i++) {
-		cout << (i + 1) << "." << player.inven[i].GetName() << endl;
-	}
-	cout << " :: 소지금 : " << player.gold << "G" << endl;
+	player.GetInven().Show();
+	cout << " :: 소지금 : " << player.GetGold() << "G" << endl;
 	cout << " ====== ========= ======" << endl;
 }
 
-void RemoveItem(Player& player, int idx) {
-	if (idx < 0 || idx >= INVEN_SIZE) return;
-	for (int i = idx; i < INVEN_SIZE - 1; ++i) {
-		player.inven[i] = player.inven[i + 1];
-	}
-	player.inven[INVEN_SIZE - 1].ItemID = noItem;
-}
-
-
 // ::인벤토리:: 아이템 획득 / 버림
 void GetItem(Player& player, ITEMLIST ItemID) {
+	if (ItemID <= noItem || ItemID >= ITEM_COUNT) return;
 	ITEM newItem;
 	newItem.ItemID = ItemID;
-
-	if (ItemID <= noItem || ItemID >= ITEM_COUNT) return;
-
+		
 	while (1) {
-		int idx = FindEmptySlot(player);
-		if (idx != -1) {
-			player.inven[idx] = newItem;
+		if (player.GetInven().Add(ItemID)) {
 			cout << "--[" << newItem.GetName() << "]을/를 획득했습니다!--\n";
 			return;
 		}
@@ -71,7 +50,6 @@ void GetItem(Player& player, ITEMLIST ItemID) {
 		}
 		else if(input == 2) {
 			cout << "--[" << newItem.GetName() << "]을/를 포기했습니다...--\n";
-			system("pause");
 			return;
 		}
 		else {
@@ -80,36 +58,37 @@ void GetItem(Player& player, ITEMLIST ItemID) {
 	}
 }
 
-int DropItamAt(Player& player, int idx) {
-	cout << "[" << player.inven[idx].GetName() << "]을/를 버렸습니다. \n";
-	RemoveItem(player, idx);
+void DropItemAt(Player& player, int idx) {
+	cout << "[" << player.GetInven().Get(idx).GetName() << "]을/를 버렸습니다. \n";
+	player.GetInven().Remove(idx);
 }
 
 int DropItem(Player& player) {
 	int idx = SelectInvenSlot(player);
-	if (idx == -1) { return false; }
-	DropItamAt(player, idx);
+	if (idx == -1) { return 0; }
+	DropItemAt(player, idx);
 	return 1;
 }
 
 // ::인벤토리:: 아이템 사용
 bool UseItem(Player& player, int idx) {
-	if (idx >= INVEN_SIZE || idx < 0 || player.inven[idx].IsEmpty()) return false;
-	ITEM item = player.inven[idx];
+	if (player.GetInven().IsEmptyAt(idx)) return false; //범위&빈칸 검사 통합
+	ITEM item = player.GetInven().Get(idx);
 
 	if (!item.IsUseble()) { //사용할 수 있는 아이템이 아니라면 사용 못함
 		cout << ">> [" << item.GetName() << "]은/는 사용할 수 없는 아이템입니다." << endl;
 		return false;
 	}
-	if (item.GetHeal() > 0) { //체력이 이미 가득 차 있다면 사용하지 않음
+	
+	if (player.GetHp() >= player.GetMaxHp()) { //체력이 이미 가득 차 있다면 사용하지 않음
 		cout << ">> 이미 HP가 가득 차 있습니다!" << endl;
 		return false;
 	}
-	cout << ">> [" << item.GetName() << "] 사용! HP를 " << item.GetHeal() << "만큼 회복합니다.";
-	player.hp += item.GetHeal();
-	if (player.GetMaxHp() < player.hp) player.hp = player.GetMaxHp();
 
-	RemoveItem(player, idx);
+	cout << ">> [" << item.GetName() << "] 사용! HP를 " << item.GetHeal() << "만큼 회복합니다.\n";
+	player.Heal(item.GetHeal());
+	player.GetInven().Remove(idx);
+
 	return true;
 }
 
@@ -120,33 +99,32 @@ int BuyItem(Player& player, ITEMLIST ItemID) { // -1 골드 부족 | 0 인벤토
 
 	int price = newItem.GetBuyPrice();
 
-	if (player.gold < price) { //골드 부족으로 구매 실패
+	if (player.GetGold() < price) { //골드 부족으로 구매 실패
 		cout << "<< 보유한 골드가 부족합니다!\n";
 		return -1; 
 	}
 
-	int idx = FindEmptySlot(player);
-	if (idx == -1) {
+	if (!player.GetInven().Add(ItemID)) {
 		cout << " >> 인벤토리가 가득 찼습니다! (" << INVEN_SIZE << "/" << INVEN_SIZE << ")\n";
 		return 0;
 	}
-	player.gold -= price;
-	player.inven[idx] = newItem;
 	cout << "--[" << newItem.GetName() << "]을/를 구매했습니다!--\n";
+	player.SpendGold(price);
 	return 1;
 }
 
 int SellItem(Player& player, int idx) {
 	idx -= 1;
-	if (idx < 0 || idx >= INVEN_SIZE || player.inven[idx].IsEmpty()) {
+	if (player.GetInven().IsEmptyAt(idx)) {
 		cout << " >> 해당 칸은 판매할 수 없습니다!\n";
 		return -1;
 	}
 
-	int price = player.inven[idx].GetSellPrice();
-	cout << player.inven[idx].GetName() << "을/를 판매해 " << price << "골드를 얻었습니다!\n";
+	const ITEM& item = player.GetInven().Get(idx);
+	int price = item.GetSellPrice();
+	cout << item.GetName() << "을/를 판매해 " << price << "골드를 얻었습니다!\n";
 	player.AddGold(price);
-	RemoveItem(player, idx);
+	player.GetInven().Remove(idx);
 	return 1;
 }
 

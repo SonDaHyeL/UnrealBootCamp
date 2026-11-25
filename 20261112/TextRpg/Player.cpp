@@ -1,5 +1,5 @@
 ﻿#include "Player.h"
-#include "Game.h"
+#include "Input.h"
 #include <iostream>
 
 using namespace std;
@@ -31,7 +31,8 @@ void Player::Init() {
 	exp = 0;
 	hp = GetMaxHp();
 }
-void Player::ShowInfo() {
+
+void Player::ShowInfo() const {
 	system("cls");
 	cout << "\n------------------------\n";
 
@@ -45,54 +46,43 @@ void Player::ShowInfo() {
 	cout << endl << " >> 다음 LV까지 " << GetNeedExp() - exp << "필요!" << endl;
 }
 
-void PlayerInit(Player& player) {
-	cout << ">> 당신의 이름을 입력하세요.\n";
-	cout << "> ";
-	cin >> player.name;
+void Player::Create() {
+	cout << ">> 당신의 이름을 입력하세요.\n>";
+	cin >> name;
 
 	cout << "\n>> 당신의 직업을 선택하세요.\n";
-	cout << " 1.전사\n";
-	cout << " 2.궁수\n";
-	cout << " 3.도적\n";
-	cout << " 4.마법사\n";
-
+	cout << " 1.전사\n 2.궁수\n 3.도적\n 4.마법사\n";
 	while (1) {
-		player.job = Select();
-		switch (player.job)
-		{
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			player.Init();
-			return;
-		default:
-			cout << " <!> 잘못된 입력입니다! \n";
-			break;
-		}
+		job = Select();
+		if (job >= 1 && job <= 4) { Init(); return; }
+		cout << " <!> 잘못된 입력입니다! \n";
 	}
-	
 }
 
-void GainExp(Player& player, int amount) {
-	player.exp += amount;
-	cout << " >> 경험치 " << amount << " 획득! (" << player.exp << "/" << player.GetNeedExp() << ")\n";
-	
-	while (player.exp >= player.GetNeedExp()) {
-		player.exp -= player.GetNeedExp();
+void Player::AddExp(int amount) {
+	exp += amount;
+	cout << " >> " << amount << " 경험치 획득! (" << exp << "/" << GetNeedExp() << ")\n";
 
-		if (player.level + 1 > MAX_LEVEL) {
+	while (exp >= GetNeedExp()) {
+		exp -= GetNeedExp();
+
+		if (level + 1 > MAX_LEVEL) {
 			cout << ">> 이미 최대 레벨입니다!" << endl;
 			cout << ":: 레벨 초과 보너스 보상 : 20G :: " << endl;
-			player.AddGold(20);
+			AddGold(20);
 			continue;
 		}
 
-		player.level++;
-		player.hp = player.GetMaxHp();
+		level++;
+		hp = GetMaxHp();
 		cout << "=======★ Level UP!!! ★======= " << endl;
-		cout << ">> LV " << player.level - 1 << " -> LV " << player.level << endl;
+		cout << ">> LV " << level - 1 << " -> LV " << level << endl;
 	}
-	
-	return;
+}
+
+bool Player::SpendGold(int amount)
+{
+	if (gold < amount) return false;
+	gold -= amount;
+	return true;
 }

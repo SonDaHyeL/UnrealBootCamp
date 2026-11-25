@@ -1,7 +1,7 @@
 ﻿#ifndef OBJECT_H
 #define OBJECT_H
 
-struct Player;
+class Player;
 const int INVEN_SIZE = 8;
 const int ACCESSORY_COUNT = 3;
 
@@ -70,7 +70,7 @@ struct ITEM {
 		
 	bool IsEmpty() const { return ItemID == noItem; }
 	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
-	bool IsUseble() const { return GetHeal() >= 0; }
+	bool IsUseble() const { return GetHeal() > 0; }
 
 	//아이템 효과 호출
 	ITEMTYPE GetEquipType() const { return ITEM_TABLE[ItemID].slot; }
@@ -81,7 +81,6 @@ struct ITEM {
 };
 
 //인벤토리 유틸리티
-int FindEmptySlot(const Player& player);
 int SelectInvenSlot(Player& player);
 void ShowInven(Player& player);
 

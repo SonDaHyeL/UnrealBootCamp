@@ -46,7 +46,7 @@ bool SaveData(const Player& player) {
 	out << player.gold << ' ' << player.quest << '\n';
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {
-		out << player.inven[i].ItemID << ' ';
+		out << player.inven.Get(i).ItemID << ' ';
 	}
 	out << '\n';
 
@@ -110,7 +110,7 @@ bool LoadData(Player& player) {
 		if (!IsValidItemId(id)) {
 			return false;
 		}
-		loaded.inven[i].ItemID = static_cast<ITEMLIST>(id);
+		loaded.inven.SetSlot(i, static_cast<ITEMLIST>(id));
 	}
 
 	for (int i = 0; i < EQUIPSLOT_END; ++i) {

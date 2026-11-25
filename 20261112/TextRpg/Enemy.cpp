@@ -1,22 +1,23 @@
 ﻿#include "Enemy.h"
 
-void Enemy::Init(int input) {
-	switch (input) {
+void Enemy::Init(int type) {
+	switch (type) {
 	case 1:
-		eName = "슬라임";
+		name = "슬라임";
 		attack = 4;
 		defense = 1;
-		hp = 20;
+		maxHp = 20;
 		dropItem = slime_shard;
 		dropExp = 4;
 		break;
 	case 2:
-		eName = "다람쥐";
+		name = "다람쥐";
 		attack = 3;
 		defense = 2;
-		hp = 15;
+		maxHp = 15;
 		dropItem = nuts;
 		dropExp = 2;
 		break;
 	}
+	hp = maxHp;
 }
