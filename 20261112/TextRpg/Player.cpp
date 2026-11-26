@@ -1,4 +1,5 @@
 ﻿#include "Player.h"
+#include "Quest.h"
 #include "UI.h"
 
 
@@ -39,7 +40,13 @@ void Player::ShowInfo() const {
 	UI::Log(" > HP : " + to_string(hp) + " / " + to_string(GetMaxHp()));
 	UI::Log(" > 공격력 : " + to_string(GetAttack()) + "  방어력 : " + to_string(GetDefense()));
 	UI::Log(" > 소지금 : " + to_string(gold) + "G");
-	UI::Log(" > 퀘스트 : " + string(quest ? "진행 중" : "없음"));
+	if (HasQuest()) {
+		const QuestData& q = GetQuestData(questId);
+		UI::Log(" > 퀘스트 : " + q.name + " (" + to_string(questKills) + "/" + to_string(q.count) + ")");
+	}
+	else {
+		UI::Log(" > 퀘스트 : 없음");
+	}
 }
 
 void Player::Create() {

@@ -1,6 +1,7 @@
 ﻿#include "DataTable.h"
 #include "Object.h"
 #include "Enemy.h"
+#include "Quest.h"
 #include <fstream>
 #include <vector>
 #include <cstdlib>
@@ -9,6 +10,7 @@ using namespace std;
 namespace {
 	vector<ItemData> itemTable;   // 칸 번호 = 아이템 ID (0번은 빈 칸)
 	vector<EnemyData> enemyTable;   // 칸 번호 = enemy ID (0번은 빈 칸)
+	vector<QuestData> questTable;
 
 	// 앞뒤 공백 제거
 	string Trim(const string& s) {
@@ -17,29 +19,23 @@ namespace {
 		return (b == string::npos) ? "" : s.substr(b, e - b + 1);
 	}
 
-	// 엑셀은 쉼표가 든 칸을 "..."로 감싸고, 안의 " 는 ""로 저장한다 → 원래대로 되돌림
-	string Unquote(const string& s) {
-		if (s.size() < 2 || s.front() != '"' || s.back() != '"') return s;
-		string out;
-		for (size_t i = 1; i + 1 < s.size(); ++i) {
-			out += s[i];
-			if (s[i] == '"' && s[i + 1] == '"') ++i;
-		}
-		return out;
-	}
-
-	// 한 줄을 쉼표로 나눈다. 마지막 칸(설명)은 줄의 나머지 전부 → 설명에는 쉼표가 있어도 됨
-	vector<string> SplitCsv(const string& line, int fieldCount) {
+	// 한 줄을 쉼표로 나눈다. "..."로 감싼 칸 안의 쉼표는 나누지 않고, "" 는 " 하나로 읽는다. (엑셀 CSV 규칙)
+	vector<string> SplitCsv(const string& line) {
 		vector<string> fields;
-		size_t start = 0;
-		for (int i = 0; i < fieldCount - 1; ++i) {
-			size_t comma = line.find(',', start);
-			if (comma == string::npos) break;
-			fields.push_back(line.substr(start, comma - start));
-			start = comma + 1;
+		string cur;
+		bool inQuotes = false;
+		for (size_t i = 0; i < line.size(); ++i) {
+			char c = line[i];
+			if (inQuotes) {
+				if (c == '"' && i + 1 < line.size() && line[i + 1] == '"') { cur += '"'; ++i; }  // "" → "
+				else if (c == '"') inQuotes = false;                                           // 닫는 따옴표
+				else cur += c;
+			}
+			else if (c == '"') inQuotes = true;                                                // 여는 따옴표
+			else if (c == ',') { fields.push_back(Trim(cur)); cur.clear(); }                   // 칸 끝
+			else cur += c;
 		}
-		fields.push_back(line.substr(start));
-		for (string& f : fields) f = Unquote(Trim(f));
+		fields.push_back(Trim(cur));
 		return fields;
 	}
 
@@ -76,7 +72,7 @@ namespace {
 		while (getline(in, line)) {
 			++lineNo;
 			if (!line.empty() && line.back() == '\r') line.pop_back();
-			vector<string> f = SplitCsv(line, FIELD_COUNT);
+			vector<string> f = SplitCsv(line);
 			if (f[0].empty()) continue;            // 빈 줄 (엑셀이 남기는 ",,,,,," 포함)
 
 			string where = path + " " + to_string(lineNo) + "번째 줄: ";
@@ -126,7 +122,7 @@ namespace {
 		while (getline(in, line)) {
 			++lineNo;
 			if (!line.empty() && line.back() == '\r') line.pop_back();
-			vector<string> f = SplitCsv(line, FIELD_COUNT);
+			vector<string> f = SplitCsv(line);
 			if (f[0].empty()) continue;
 
 			string where = path + " " + to_string(lineNo) + "번째 줄: ";
@@ -169,11 +165,64 @@ namespace {
 		if (enemyTable.size() <= 1) { error = path + "에 몬스터가 하나도 없습니다."; return false; }
 		return true;
 	}
+
+	bool LoadQuests(const string& path, string& error) {
+		ifstream in(path);
+		if (!in) { error = path + " 파일을 열 수 없습니다."; return false; }
+
+		const int FIELD_COUNT = 9;
+		questTable.assign(1, QuestData());
+
+		string line;
+		int lineNo = 1;
+		getline(in, line);
+		while (getline(in, line)) {
+			++lineNo;
+			if (!line.empty() && line.back() == '\r') line.pop_back();
+			vector<string> f = SplitCsv(line);
+			if (f[0].empty()) continue;
+
+			string where = path + " " + to_string(lineNo) + "번째 줄: ";
+			if ((int)f.size() < FIELD_COUNT) { error = where + "칸 수가 부족합니다."; return false; }
+
+			int id = 0;
+			if (!ToInt(f[0], id) || id <= 0) { error = where + "ID는 1 이상의 숫자여야 합니다."; return false; }
+
+			QuestData d;
+			d.exists = true;
+			d.name = f[1];
+			if (d.name.empty()) { error = where + "이름이 비어 있습니다."; return false; }
+
+			const char* colName[] = { "대상몬스터ID", "목표수", "보상골드", "보상경험치", "보상아이템ID" };
+			int* target[] = { &d.target, &d.count, &d.rewardGold, &d.rewardExp, &d.rewardItem };
+			for (int c = 0; c < 5; ++c) {
+				if (!ToInt(f[2 + c], *target[c])) {
+					error = where + colName[c] + " 칸이 숫자가 아닙니다.";
+					return false;
+				}
+			}
+			d.request = f[7];
+			d.complete = f[8];
+
+			if (!GetEnemyData(d.target).exists) {
+				error = where + "대상몬스터ID " + to_string(d.target) + "번은 monsters.csv에 없습니다."; return false;
+			}
+			if (d.count < 1) { error = where + "목표수는 1 이상이어야 합니다."; return false; }
+			if (d.rewardItem != noItem && !IsValidItem(d.rewardItem)) {
+				error = where + "보상아이템ID " + to_string(d.rewardItem) + "번은 items.csv에 없습니다."; return false;
+			}
+
+			if (id >= (int)questTable.size()) questTable.resize(id + 1);
+			if (questTable[id].exists) { error = where + "ID " + to_string(id) + "번이 중복되었습니다."; return false; }
+			questTable[id] = d;
+		}
+		return true;     // 퀘스트는 0개여도 됨 (촌장이 할 말이 없을 뿐)
+	}
 }
 
 // ===== 공개 함수 =====
 bool LoadGameData(string& error) {
-	return LoadItems("items.csv", error) && LoadEnemies("monsters.csv", error);
+	return LoadItems("items.csv", error) && LoadEnemies("monsters.csv", error) && LoadQuests("quests.csv", error);
 }
 
 const ItemData& GetItemData(ITEMLIST id) {
@@ -204,4 +253,16 @@ vector<int> GetEnemyIds() {
 	for (int id = 1; id < (int)enemyTable.size(); ++id)
 		if (enemyTable[id].exists) list.push_back(id);
 	return list;
+}
+
+const QuestData& GetQuestData(int id) {
+	static const QuestData EMPTY;
+	if (id <= 0 || id >= (int)questTable.size() || !questTable[id].exists) return EMPTY;
+	return questTable[id];
+}
+
+int GetNextQuestId(int lastDone) {
+	for (int id = lastDone + 1; id < (int)questTable.size(); ++id)
+		if (questTable[id].exists) return id;
+	return 0;
 }

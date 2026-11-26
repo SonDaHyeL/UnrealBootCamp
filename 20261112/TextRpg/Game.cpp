@@ -3,6 +3,7 @@
 #include "Battle.h"
 #include "SaveLoad.h"
 #include "DataTable.h"
+#include "Quest.h"
 
 using namespace std;
 
@@ -208,19 +209,54 @@ Game::Scene Game::Town() {
 void Game::TalkToChief() {
 	UI::Log("");
 	UI::Log("> 마을 촌장이 거리에서 서성이고 있습니다. 문제라도 있는 걸까요?");
-	if (UI::Menu(player, { "대화를 시도한다", "무시한다" }) == 1) {
-		UI::Log("> 당신은 촌장에게 말을 걸었습니다...");
-		UI::Log("'거기 모험가 양반, 혹시 괜찮다면 사냥터의 슬라임을 잡아다 주지 않겠나?'");
-		if (UI::Menu(player, { "승낙한다", "거절한다" }) == 1) {
-			player.AcceptQuest();
-			UI::Log("★ 퀘스트 승낙! 사냥터를 어지럽히는 슬라임을 잡자! (0/1)");
+	if (UI::Menu(player, { "대화를 시도한다", "무시한다" }) != 1) {
+		UI::Log("> 당신은 촌장을 무시했습니다... 어쩐지 뒤통수가 따가운 기분이 듭니다.");
+		return;
+	}
+
+	// 1) 진행 중인 퀘스트가 있으면: 완료 보고 또는 재촉
+	if (player.HasQuest()) {
+		const QuestData& q = GetQuestData(player.GetQuestId());
+		string progress = to_string(player.GetQuestKills()) + "/" + to_string(q.count);
+
+		if (player.GetQuestKills() < q.count) {
+			UI::Log("'아직 끝나지 않은 모양이구먼. 잘 부탁하네.' [" + q.name + " " + progress + "]");
+			return;
 		}
-		else {
-			UI::Log("'에잇, 요즘 젊은이들은 통 야박해...'");
+
+		UI::Log("'" + q.complete + "'");
+		UI::Log("★ 퀘스트 완료! [" + q.name + "]");
+		if (q.rewardGold > 0) {
+			player.AddGold(q.rewardGold);
+			UI::Log(">> 보상으로 " + to_string(q.rewardGold) + "골드를 받았습니다!");
 		}
+		if (q.rewardExp > 0)        player.AddExp(q.rewardExp);         // 획득/레벨업 로그는 AddExp가 남김
+		if (q.rewardItem != noItem) GetItem(player, q.rewardItem);      // 가방이 가득 차면 GetItem이 물어봄
+		player.CompleteQuest();
+		return;
+	}
+
+	// 2) 진행 중인 퀘스트가 없으면: 다음 퀘스트 의뢰
+	int next = GetNextQuestId(player.GetLastQuestDone());
+	if (next == 0) {
+		UI::Log("'요즘은 마을이 참 평화롭구먼. 다 자네 덕분일세.'");
+		return;
+	}
+
+	const QuestData& q = GetQuestData(next);
+	string reward = to_string(q.rewardGold) + "G, EXP " + to_string(q.rewardExp);
+	if (q.rewardItem != noItem) reward += ", " + GetItemData(q.rewardItem).name;
+
+	UI::Log("'" + q.request + "'");
+	UI::Log("  [" + q.name + "] 목표: " + GetEnemyData(q.target).name + " " + to_string(q.count)
+		+ "마리 / 보상: " + reward);
+
+	if (UI::Menu(player, { "승낙한다", "거절한다" }) == 1) {
+		player.AcceptQuest(next);
+		UI::Log("★ 퀘스트 승낙! [" + q.name + "] (0/" + to_string(q.count) + ")");
 	}
 	else {
-		UI::Log("> 당신은 촌장을 무시했습니다... 어쩐지 뒤통수가 따가운 기분이 듭니다.");
+		UI::Log("'에잇, 요즘 젊은이들은 통 야박해...'");
 	}
 }
 

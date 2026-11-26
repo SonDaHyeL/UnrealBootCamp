@@ -1,4 +1,5 @@
 ﻿#include "SaveLoad.h"
+#include "Quest.h"
 #include <fstream>
 #include <string>
 #include <limits>
@@ -7,7 +8,7 @@
 //   버전
 //   이름
 //   직업 번호 레벨 경험치 현재HP
-//   골드 퀘스트(0/1)
+//   (버전 2: 골드 퀘스트(0/1))
 //   인벤토리 아이템 ID x INVEN_SIZE
 //   장비 아이템 ID x EQUIPSLOT_END
 //
@@ -15,8 +16,10 @@
 // 불러올 때 직업 번호로 Init()을 호출해 다시 계산한다. (밸런스를 바꿔도 예전 저장 파일에 반영됨)
 //
 // Player에 필드를 추가하면 SaveData/LoadData 양쪽을 같은 위치에 수정하고 SAVE_VERSION을 올릴 것.
+
+
 namespace {
-	const int SAVE_VERSION = 2;   // 2: 레벨 시스템 도입 (능력치 대신 레벨/경험치 저장)
+	const int SAVE_VERSION = 3;   // 3: 퀘스트 표 도입 (진행 퀘스트, 처치 수, 완료 기록)
 	const char* SAVE_PATH = "Playerdata.txt";
 
 	// Player::Init()이 처리하는 직업 번호 범위 (직업을 추가하면 같이 수정)
@@ -39,7 +42,7 @@ bool SaveData(const Player& player) {
 	out << SAVE_VERSION << '\n';
 	out << player.name << '\n';
 	out << player.job << ' ' << player.level << ' ' << player.exp << ' ' << player.hp << '\n';
-	out << player.gold << ' ' << player.quest << '\n';
+	out << player.gold << ' ' << player.questId << ' ' << player.questKills << ' ' << player.lastQuestDone << '\n';
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {
 		out << player.inven.Get(i).ItemID << ' ';
@@ -62,7 +65,7 @@ bool LoadData(Player& player) {
 
 	int version = 0;
 	in >> version;
-	if (!in || version != SAVE_VERSION) {
+	if (!in || (version != SAVE_VERSION)) {
 		return false;
 	}
 
@@ -94,9 +97,15 @@ bool LoadData(Player& player) {
 	// 경험치가 이미 다음 레벨 요구량 이상이면 "다음 LV까지"가 음수로 보이므로 직전 값으로 맞춘다.
 	if (loaded.exp >= loaded.GetNeedExp()) loaded.exp = loaded.GetNeedExp() - 1;
 
-	in >> loaded.gold >> loaded.quest;
+	in >> loaded.gold >> loaded.questId >> loaded.questKills >> loaded.lastQuestDone;
 	if (!in || loaded.gold < 0) {
 		return false;
+	}
+
+	// 퀘스트 표에서 지워진 퀘스트를 진행 중이었으면 취소
+	if (loaded.questId != 0 && !GetQuestData(loaded.questId).exists) {
+		loaded.questId = 0;
+		loaded.questKills = 0;
 	}
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {

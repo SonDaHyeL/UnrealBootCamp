@@ -21,7 +21,9 @@ private:
 	int growAtk = 0;		int growDef = 0;	int growHP = 0;
 
 	int gold = 0;
-	bool quest = false;
+	int questId = 0;          // 진행 중인 퀘스트 ID (0 = 없음)
+	int questKills = 0;       // 진행 중인 퀘스트의 처치 수
+	int lastQuestDone = 0;    // 마지막으로 완료한 퀘스트 ID (다음 의뢰를 정할 때 사용)
 
 	//아이템 종류와 장비칸 번호 매칭. 장비가 아닐 시 -1 리턴
 	int FindEquipSlot(ITEMTYPE type) const;
@@ -41,9 +43,17 @@ public:
 	int GetMaxHp() const override { return basehp + growHP * (level - 1) + getEquipStats().hp; } //레벨 + 장비에 따른 최대 체력 계산
 	int GetNeedExp() const { return level * 20; } //다음 레벨까지 경험치 요구량
 
-	bool HasQuest() const { return quest; } //캐릭터 소지 여부 판정 
 	void ShowInfo() const; //캐릭터 정보창 출력
 
+	//***퀘스트***
+	bool HasQuest() const { return questId != 0; }
+	int GetQuestId() const { return questId; }
+	int GetQuestKills() const { return questKills; }
+	int GetLastQuestDone() const { return lastQuestDone; }
+
+	void AcceptQuest(int id) { questId = id; questKills = 0; }
+	void AddQuestKill() { ++questKills; }
+	void CompleteQuest() { lastQuestDone = questId; questId = 0; questKills = 0; }
 
 	//*** HP ***
 	void Revive() { hp = 1; } //사망 후 부활
@@ -53,10 +63,8 @@ public:
 	bool SpendGold(int amount);
 
 
-	//***경험치와 퀘스트***
+	//***경험치***
 	void AddExp(int amount);
-	void AcceptQuest() { quest = true; }
-	void CompleteQuest() { quest = false; }
 	
 	//***인벤토리***
 	Inventory& GetInven() { return inven; }

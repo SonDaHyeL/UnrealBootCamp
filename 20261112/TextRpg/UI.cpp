@@ -5,6 +5,7 @@
 #include "UI.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Quest.h"
 using namespace std;
 
 namespace {
@@ -120,12 +121,20 @@ namespace {
 
 	vector<string> StatusPanel(const Player& p) {
 		if (p.GetJobName().empty()) return { "(캐릭터 생성 전)" };
-		return {
+		vector<string> v = {
 			p.GetName() + " [" + p.GetJobName() + "] Lv." + to_string(p.GetLevel()),
 			"HP " + HpBar(p.GetHp(), p.GetMaxHp()),
 			"   " + to_string(p.GetHp()) + " / " + to_string(p.GetMaxHp()),
 			"ATK " + to_string(p.GetAttack()) + "  DEF " + to_string(p.GetDefense()),
 		};
+		if (p.HasQuest()) {
+			const QuestData& q = GetQuestData(p.GetQuestId());
+			bool done = p.GetQuestKills() >= q.count;
+			v.push_back("");
+			v.push_back("Q " + q.name);
+			v.push_back("  " + to_string(p.GetQuestKills()) + "/" + to_string(q.count) + (done ? " (보고하자!)" : ""));
+		}
+		return v;
 	}
 
 	vector<string> OptionPanel(const vector<string>& options, int first, const string& prompt) {

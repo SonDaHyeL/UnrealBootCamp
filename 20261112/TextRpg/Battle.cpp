@@ -3,6 +3,7 @@
 #include <string>
 #include "UI.h"
 #include "Battle.h"
+#include "Quest.h"
 
 using namespace std;
 
@@ -129,12 +130,16 @@ void Fight(Player& player, Enemy& enemy) {
 		GetItem(player, enemy.GetRareItem());
 	}
 
-	if (enemy.GetName() == "슬라임" && player.HasQuest()) {
-		UI::Log("");
-		UI::Log(":: 퀘스트 성공! :: 사냥터를 어지럽히는 슬라임을 잡자! (1/1)");
-		UI::Log(">> 퀘스트 완료 보상으로 10골드를 얻었습니다!");
-		player.AddGold(10);
-		player.CompleteQuest();
+	// 퀘스트 대상이면 처치 수 +1 (목표 수를 넘어서는 세지 않음)
+	if (player.HasQuest()) {
+		const QuestData& q = GetQuestData(player.GetQuestId());
+		if (enemy.GetId() == q.target && player.GetQuestKills() < q.count) {
+			player.AddQuestKill();
+			UI::Log("★ [" + q.name + "] " + enemy.GetName() + " 처치 ("
+				+ to_string(player.GetQuestKills()) + "/" + to_string(q.count) + ")");
+			if (player.GetQuestKills() == q.count)
+				UI::Log("★ 퀘스트 목표 달성! 마을 촌장에게 보고하자.");
+		}
 	}
 	UI::Log("> 야호!");
 }
