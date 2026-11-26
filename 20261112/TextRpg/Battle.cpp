@@ -77,7 +77,7 @@ void Fight(Player& player, Enemy& enemy) {
 	UI::Log(enemy.GetName() + "이/가 나타났습니다!");
 
 	while (!player.IsDead() && !enemy.IsDead()) {
-		int input = UI::Menu(player, { "공격한다", "방어한다", "도망간다" }, 1, &enemy);
+		int input = UI::Menu(player, { "공격한다", "방어한다", "아이템 사용","도망간다" }, 1, &enemy);
 		UI::Log("");                               // 턴 구분용 빈 줄
 		switch (input) {
 		case 1:
@@ -88,7 +88,20 @@ void Fight(Player& player, Enemy& enemy) {
 			UI::Log(player.GetName() + "은/는 방어 자세를 취했습니다! (방어력 2배)");
 			Attack(enemy, player, 2);
 			break;
-		case 3:
+		case 3: {
+			int idx = SelectInvenSlot(player);
+			if (idx == -1) break;	//아이템 사용 취소. 턴 소모하지 않음.
+
+			if (player.GetInven().Get(idx).IsEquipment()) {
+				UI::Log(">> 전투 중에는 장비를 바꿀 수 없습니다!");
+				break; // 취소 처리. 턴 소모하지 않음.
+			}
+
+			if (UseItem(player, idx))
+				Attack(enemy, player); //적의 반격! 턴 소모됨
+			break;
+		}
+		case 4:
 			UI::Log("> 당신은 도망쳤습니다... 이런...");
 			return;
 		}
@@ -99,7 +112,8 @@ void Fight(Player& player, Enemy& enemy) {
 		return;
 	}
 
-	UI::Log(enemy.GetName() + "이/가 쓰러졌습니다! > 이겼다!");
+	UI::Log(enemy.GetName() + "이/가 쓰러졌습니다!");
+	UI::Log("> 이겼다!");
 	player.AddExp(enemy.GetDropExp());
 	GetItem(player, enemy.GetDropItem());
 

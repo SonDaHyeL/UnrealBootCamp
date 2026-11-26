@@ -1,6 +1,8 @@
 ﻿#ifndef OBJECT_H
 #define OBJECT_H
 
+#include <string>
+
 class Player;
 const int INVEN_SIZE = 8;
 const int ACCESSORY_COUNT = 3;
@@ -36,6 +38,10 @@ enum EQUIPSLOT {
 	SLOT_ACCESSORY2,
 	SLOT_ACCESSORY3,
 	EQUIPSLOT_END
+};
+
+const char* const EQUIPSLOT_NAME[EQUIPSLOT_END]{
+	"무기", "머리", "몸", "다리", "발", "장신구1", "장신구2", "장신구3"
 };
 
 struct ItemData {
@@ -82,6 +88,7 @@ struct ITEM {
 
 //인벤토리 유틸리티
 int SelectInvenSlot(Player& player);
+std::string GetItemInfo(const ITEM& item); //아이템 효과 출력
 
 //인벤토리 추가 삭제
 void GetItem(Player& player, ITEMLIST ItemID);

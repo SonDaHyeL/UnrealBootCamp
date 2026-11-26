@@ -94,8 +94,7 @@ bool LoadData(Player& player) {
 	loaded.level = level;
 	loaded.exp = exp;
 	loaded.hp = hp;
-	if (loaded.hp > loaded.GetMaxHp()) loaded.hp = loaded.GetMaxHp(); // 밸런스 변경으로 최대HP가 줄었을 때
-	if (loaded.hp < 1) loaded.hp = 1;
+	
 	// 경험치가 이미 다음 레벨 요구량 이상이면 "다음 LV까지"가 음수로 보이므로 직전 값으로 맞춘다.
 	if (loaded.exp >= loaded.GetNeedExp()) loaded.exp = loaded.GetNeedExp() - 1;
 
@@ -125,6 +124,9 @@ bool LoadData(Player& player) {
 	if (in.fail()) {
 		return false;
 	}
+
+	if (loaded.hp > loaded.GetMaxHp()) loaded.hp = loaded.GetMaxHp(); // 밸런스 변경으로 최대HP가 줄었을 때
+	if (loaded.hp < 1) loaded.hp = 1;
 
 	player = loaded;
 	return true;

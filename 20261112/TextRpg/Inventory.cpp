@@ -1,6 +1,4 @@
 ﻿#include "Inventory.h"
-#include <iostream>
-using namespace std;
 
 bool Inventory::Add(ITEMLIST id) {
 	if (id <= noItem || id >= ITEM_COUNT) return false;

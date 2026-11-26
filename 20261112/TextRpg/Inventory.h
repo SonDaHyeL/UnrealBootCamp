@@ -22,7 +22,7 @@ public:
 	// idx 칸의 아이템. 범위 밖이면 "비어 있음" 아이템을 돌려준다.
 	const ITEM& Get(int idx) const;
 
-	// 저장 파일 불러오기 전용: 칸에 ID를 그대로 써 넣는다. 
+	// idx 칸에 ID를 그대로 써 넣는다. (불러오기, 장비 교체용)
 	void SetSlot(int idx, ITEMLIST id);
 
 private:

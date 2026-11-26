@@ -63,18 +63,83 @@ void Game::Save() {
 void Game::InvenMenu() {
 	UI::Log("");
 	UI::Log(":: 인벤토리 관리 ::");
+	bool equipPage = false;
 
 	while (true) {
-		int idx = SelectInvenSlot(player);       // 취소하거나 빈 칸이면 -1
-		if (idx == -1) return;
+		UI::SetEquipPage(equipPage);
 
-		UI::Log("[" + string(player.GetInven().Get(idx).GetName()) + "]을/를 선택했습니다.");
-		switch (UI::Menu(player, { "사용한다", "버린다", "그만둔다" })) {
-		case 1: UseItem(player, idx); break;
-		case 2: DropItemAt(player, idx); break;
-		case 3: break;
+		// 선택지: 1~count 각 칸 | count+1 페이지 넘기기 | count+2 닫기
+		int count = equipPage ? EQUIPSLOT_END : INVEN_SIZE;
+		vector<string> option;
+
+		for (int i = 0; i < count; ++i) {
+			const ITEM& item = equipPage ? player.GetEquip(i) : player.GetInven().Get(i);
+			string itemName = item.IsEmpty() ? "-" : item.GetName();
+			option.push_back(equipPage ? string(EQUIPSLOT_NAME[i]) + " : " + itemName : itemName);
 		}
+		option.push_back(equipPage ? "인벤토리 보기" : "장비창 보기");
+		option.push_back("닫기");
+
+		int input = UI::Menu(player, option);
+		if (input == count + 2) break;										  //닫기
+		if (input == count + 1) { equipPage = !equipPage; continue; } //페이지 넘기기
+
+		int idx = input - 1;
+		const ITEM& picked = equipPage ? player.GetEquip(idx) : player.GetInven().Get(idx);
+
+		if (picked.IsEmpty()) {
+			UI::Log(">> 빈 칸입니다.");
+			continue;
+		}
+
+		if (equipPage) EquipMenu(idx);
+		else ItemMenu(idx);
 	}
+	UI::SetEquipPage(false);
+}
+
+
+void Game::ItemMenu(int idx) {
+	ITEM item = player.GetInven().Get(idx);
+	UI::Log("[" + string(item.GetName()) + "] " + GetItemInfo(item));
+
+	// 아이템 종류에 따라 선택지를 만든다. 글자(labels)와 행동(actions)을 같은 순서로 담는다.
+	enum class Action { USE, EQUIP, DROP, CANCLE };
+
+	vector<string> labels;
+	vector<Action> actions;
+
+	if (item.IsUseble()) {
+		labels.push_back("사용한다");
+		actions.push_back(Action::USE);
+	}
+
+	if (item.IsEquipment()) {
+		labels.push_back("장착한다");
+		actions.push_back(Action::EQUIP);
+	}
+
+	labels.push_back("버린다");
+	actions.push_back(Action::DROP);
+	labels.push_back("그만둔다");
+	actions.push_back(Action::CANCLE);
+
+	switch (actions[UI::Menu(player, labels) - 1]) {
+	case Action::USE:		UseItem(player, idx);		break;
+	case Action::EQUIP:		player.Equip(idx);			break;
+	case Action::DROP:
+		if (UI::Menu(player, { "정말 버린다", "그만둔다" }) == 1)
+		DropItemAt(player, idx);
+		break;
+	case Action::CANCLE:	break;
+	}
+}
+
+void Game::EquipMenu(int slot) {
+	ITEM item = player.GetEquip(slot);
+	UI::Log("[" + string(EQUIPSLOT_NAME[slot]) + "] " + item.GetName() + "  " + GetItemInfo(item));
+	if (UI::Menu(player, { "해제한다", "그만둔다" }) == 1) 
+	{	player.Unequip(slot);	}
 }
 
 
@@ -99,11 +164,11 @@ Game::Scene Game::Start() {
 	UI::Log("어디로 가볼까요?");
 
 	while (true) {
-		switch (UI::Menu(player, { "인벤토리 관리", "마을로 간다", "사냥터로 간다", "모험을 종료한다" }, 0)) {
-		case 0: InvenMenu(); break;
-		case 1: return Scene::TOWN;
-		case 2: return Scene::HUNTING;
-		case 3: return Scene::QUIT;
+		switch (UI::Menu(player, { "인벤토리 관리", "마을로 간다", "사냥터로 간다", "모험을 종료한다" })) {
+		case 1: InvenMenu(); break;
+		case 2: return Scene::TOWN;
+		case 3: return Scene::HUNTING;
+		case 4: return Scene::QUIT;
 		}
 	}
 }
@@ -121,13 +186,12 @@ Game::Scene Game::Town() {
 			"주변을 탐색한다", 
 			"상점으로 간다",
 			"사냥터로 이동한다", 
-			"모험을 종료한다" },
-			0)) {
-		case 0: InvenMenu(); break;
-		case 1: TalkToChief(); break;
-		case 2: return Scene::STORE;
-		case 3: return Scene::HUNTING;
-		case 4: return Scene::QUIT;
+			"모험을 종료한다" })) {
+		case 1: InvenMenu(); break;
+		case 2: TalkToChief(); break;
+		case 3: return Scene::STORE;
+		case 4: return Scene::HUNTING;
+		case 5: return Scene::QUIT;
 		}
 	}
 }
@@ -162,10 +226,11 @@ Game::Scene Game::Store() {
 	UI::Log("'어서 오세요! 모험가님! 필요한 물건이라도 있으신가요?'");
 
 	while (true) {
-		switch (UI::Menu(player, { "아이템을 구매한다", "아이템을 판매한다", "상점을 나간다" })) {
-		case 1: BuyMenu(); break;
-		case 2: SellMenu(); break;
-		case 3: return Scene::TOWN;
+		switch (UI::Menu(player, { "인벤토리 관리", "아이템을 구매한다", "아이템을 판매한다", "상점을 나간다" })) {
+		case 1: InvenMenu(); break;
+		case 2: BuyMenu(); break;
+		case 3: SellMenu(); break;
+		case 4: return Scene::TOWN;
 		}
 	}
 }
@@ -180,14 +245,15 @@ void Game::BuyMenu() {
 	UI::Log(" - 나뭇잎 왕관 : 나는 숲속의 왕이다. (DEF +2 & MAX HP +10)");
 	UI::Log(" - 꽃 반지 : 정성스레 엮었다. (DEF +1 & MAX HP +30)");
 
-	// 선택지: 0번은 나가기, 1~4번은 상품 (이름과 가격은 ITEM_TABLE에서)
-	vector<string> options = { "아무것도 사지 않는다" };
+	// 선택지: 1~4번은 상품 (이름과 가격은 ITEM_TABLE에서), 마지막 번호는 나가기
+	vector<string> options;
 	for (ITEMLIST id : goods)
 		options.push_back(string(ITEM_TABLE[id].name) + " (" + to_string(ITEM_TABLE[id].buyPrice) + "G)");
+	options.push_back("아무것도 사지 않는다");
 
 	while (true) {
-		int input = UI::Menu(player, options, 0);
-		if (input == 0) {
+		int input = UI::Menu(player, options);
+		if (input == (int)options.size()) {      // 마지막 번호 = 나가기
 			UI::Log("'에이, 조금만 더 보고 가시지!'");
 			return;
 		}
@@ -206,15 +272,17 @@ void Game::SellMenu() {
 
 	while (true) {
 		// 팔 때마다 인벤토리가 바뀌니까 선택지를 매번 새로 만든다
-		vector<string> options = { "아무것도 팔지 않는다" };
+		// 1~8번 = 인벤토리 칸 번호 그대로, 마지막 번호는 나가기
+		vector<string> options;
 		for (int i = 0; i < INVEN_SIZE; ++i) {
 			const ITEM& item = player.GetInven().Get(i);
 			options.push_back(item.IsEmpty() ? "-"
 				: string(item.GetName()) + " (" + to_string(item.GetSellPrice()) + "G)");
 		}
+		options.push_back("아무것도 팔지 않는다");
 
-		int input = UI::Menu(player, options, 0);
-		if (input == 0) {
+		int input = UI::Menu(player, options);
+		if (input == (int)options.size()) {
 			UI::Log("'에이, 좋게 잘 봐드릴 수 있는데요!'");
 			return;
 		}
@@ -228,15 +296,15 @@ Game::Scene Game::Hunting() {
 	UI::ClearLog();
 	UI::Log("사나운 몬스터 주의! 팻말이 붙어있습니다.");
 
-	Enemy enemy;
 	while (true) {
 		int input = UI::Menu(player, { "인벤토리 관리", "슬라임을 사냥한다", "다람쥐를 사냥한다",
-									   "마을로 돌아간다", "모험을 종료한다" }, 0);
+									   "마을로 돌아간다", "모험을 종료한다" });
 		switch (input) {
-		case 0: InvenMenu(); break;
-		case 1:
+		case 1: InvenMenu(); break;
 		case 2:
-			enemy.Init(input);
+		case 3:
+		{
+			Enemy enemy(input - 1);            // 선택 2,3 → 적 종류 1(슬라임), 2(다람쥐)
 			Fight(player, enemy);
 			UI::SetTitle("사 냥 터");          // 전투 로그는 남겨두고 제목만 되돌림
 
@@ -249,8 +317,9 @@ Game::Scene Game::Hunting() {
 				return Scene::QUIT;
 			}
 			break;
-		case 3: return Scene::TOWN;
-		case 4: return Scene::QUIT;
+		}
+		case 4: return Scene::TOWN;
+		case 5: return Scene::QUIT;
 		}
 	}
 }

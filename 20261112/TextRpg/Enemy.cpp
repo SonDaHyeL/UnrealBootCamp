@@ -1,6 +1,6 @@
 ﻿#include "Enemy.h"
 
-void Enemy::Init(int type) {
+Enemy::Enemy(int type) {
 	switch (type) {
 	case 1:
 		name = "슬라임";

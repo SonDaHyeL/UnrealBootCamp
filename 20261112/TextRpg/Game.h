@@ -31,6 +31,8 @@ private:
 	void BuyMenu();
 	void SellMenu();
 	void InvenMenu();
+	void ItemMenu(int idx);
+	void EquipMenu(int slot);
 
 	//게임이 플레이어를 소유함
 	Player player;

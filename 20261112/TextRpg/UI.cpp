@@ -20,6 +20,7 @@ namespace {
 
 	string title;
 	vector<string> logLines;
+	bool equipPage = false;
 
 	// ASCII: 1바이트·1칸 / 한글: 2바이트·2칸 / 기호: 2바이트·SYMBOL_W칸
 	int CharBytes(unsigned char c) { return c < 0x80 ? 1 : 2; }
@@ -93,6 +94,19 @@ namespace {
 		return v;
 	}
 
+	vector<string> EquipPanel(const Player& p) {
+		vector<string> v;
+		for (int i = 0; i < EQUIPSLOT_END; ++i) {
+			const ITEM& item = p.GetEquip(i);
+			v.push_back(Fit(EQUIPSLOT_NAME[i], 7) + ": " + (item.IsEmpty() ? "-": item.GetName()));
+		}
+		Player::EquipStats s = p.getEquipStats();
+		v.push_back("");
+		v.push_back("ATK +" + to_string(s.atk) + "  DEF +" + to_string(s.def));
+		v.push_back("MAX HP +" + to_string(s.hp));
+		return v;
+	}
+
 	vector<string> EnemyPanel(const Enemy& e) {
 		return {
 			e.GetName(),
@@ -138,7 +152,8 @@ namespace {
 		system("cls");
 		vector<string> tl = Box(title, LogPanel(), LEFT_W, TOP_H);
 		vector<string> tr = enemy ? Box("적", EnemyPanel(*enemy), RIGHT_W, TOP_H)
-			: Box("인벤토리", InvenPanel(p), RIGHT_W, TOP_H);
+			: equipPage ? Box("장 비 (2/2)",EquipPanel(p), RIGHT_W, TOP_H)
+			: Box("인벤토리 (1/2)", InvenPanel(p), RIGHT_W, TOP_H);
 		vector<string> bl = Box("선택지", OptionPanel(options, first, prompt), LEFT_W, BOTTOM_H);
 		vector<string> br = Box("상 태", StatusPanel(p), RIGHT_W, BOTTOM_H);
 
@@ -200,3 +215,5 @@ string UI::AskText(const Player& player, const string& prompt) {
 	cin >> text;
 	return text;
 }
+
+void UI::SetEquipPage(bool on) { equipPage = on; }

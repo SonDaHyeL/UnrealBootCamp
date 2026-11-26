@@ -7,23 +7,24 @@ using namespace std;
 // ::인벤토리:: 기본 조작
 int SelectInvenSlot(Player& player) {
 	UI::Log(">> 인벤토리 슬롯을 선택하세요.");
-	vector<string> options = { "취소" };
+	// 1~8번 = 인벤토리 칸 번호 그대로, 마지막 번호는 취소
+	vector<string> options;
 	for (int i = 0; i < INVEN_SIZE; ++i) {
 		const ITEM& item = player.GetInven().Get(i);
 		options.push_back(item.IsEmpty() ? "-" : item.GetName());
 	}
+	options.push_back("취소");
 
-	int input = UI::Menu(player, options, 0);
-	if (input == 0) {
-		UI::Log(" >> 아무것도 선택되지 않았습니다.");
-		return -1;
+	while (true) {
+		int input = UI::Menu(player, options);
+		if (input == (int)options.size()) {
+			UI::Log(" >> 아무것도 선택되지 않았습니다.");
+			return -1;                           // -1은 이제 "취소"일 때만
+		}
+		int idx = input - 1;
+		if (!player.GetInven().IsEmptyAt(idx)) return idx;
+		UI::Log(" >> 빈 칸입니다. 다시 선택해주세요.");
 	}
-	int idx = input - 1;
-	if (player.GetInven().IsEmptyAt(idx)) {
-		UI::Log(" >> 빈 칸입니다.");
-		return -1;
-	}
-	return idx;
 }
 
 // ::인벤토리:: 아이템 획득 / 버림
@@ -72,7 +73,7 @@ bool UseItem(Player& player, int idx) {
 		return false;
 	}
 
-	UI::Log(">> [" + string(item.GetName()) + "]은/는 사용할 수 없는 아이템입니다.");
+	UI::Log(">> [" + string(item.GetName()) + "] 사용! HP를 " + to_string(item.GetHeal()) + "만큼 회복합니다.");
 	player.Heal(item.GetHeal());
 	player.GetInven().Remove(idx);
 
@@ -116,3 +117,14 @@ int SellItem(Player& player, int idx) {
 }
 
 
+//아이템 정보 출력
+string GetItemInfo(const ITEM& item) {
+	string info;
+	if (item.GetAtk() > 0) info += "ATK +" + to_string(item.GetAtk()) + " ";
+	if (item.GetDef() > 0) info += "DEF +" + to_string(item.GetDef()) + " ";
+	if (item.GetPlusHp() > 0) info += "MAX HP +" + to_string(item.GetPlusHp()) + " ";
+	if (item.GetHeal() > 0) info += "HP 회복 +" + to_string(item.GetHeal()) + " ";
+	if (info.empty()) info += "특별한 효과 없음 ";
+	
+	return info + "(판매가 : " + to_string(item.GetSellPrice()) + "G)";
+}

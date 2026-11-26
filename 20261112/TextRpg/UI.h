@@ -16,5 +16,7 @@ namespace UI {
 	int Menu(const Player& player, const std::vector<std::string>& options, 
 		int first = 1, const Enemy* enemy = nullptr);
 
+	void SetEquipPage(bool on);
+
 	std::string AskText(const Player& player, const std::string& prompt);
 }
