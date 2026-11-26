@@ -2,21 +2,14 @@
 #define OBJECT_H
 
 #include <string>
+#include <vector>
 
 class Player;
 const int INVEN_SIZE = 8;
 const int ACCESSORY_COUNT = 3;
 
-enum ITEMLIST {
-	noItem = 0,
-	slime_shard,
-	nuts,
-	wooden_sword,
-	leaf_crown,
-	flower_ring,
-	heal_potion,
-	ITEM_COUNT
-};
+using ITEMLIST = int;
+const ITEMLIST noItem = 0;
 
 enum ITEMTYPE {
 	NONE_EQUIP = -1,
@@ -26,6 +19,47 @@ enum ITEMTYPE {
 	EQUIP_LEG,
 	EQUIP_FOOT,
 	EQUIP_ACCESSORY,
+};
+
+struct ItemData {
+	bool exists = false;              // 파일에 있는 ID인지 (중간에 지운 ID는 false)
+	std::string name = "비어 있음";
+	int buyPrice = 0;
+	int sellPrice = 0;
+	ITEMTYPE slot = NONE_EQUIP;
+	int atk = 0;
+	int def = 0;
+	int plushp = 0;
+	int heal = 0;
+	bool inShop = false;              // 상점판매 Y/N
+	std::string description;
+};
+
+// ===== 아이템 표 (DataTable.cpp가 items.csv를 읽어 채운다) =====
+const ItemData& GetItemData(ITEMLIST id);    // 없는 ID면 "비어 있음"
+bool IsValidItem(ITEMLIST id);               // 파일에 있는 실제 아이템인지 (0 제외)
+std::vector<ITEMLIST> GetShopItems();        // 상점판매 = Y 인 아이템 ID들
+
+
+struct ITEM {
+	ITEMLIST ItemID = noItem;
+
+	const char* GetName() const { return GetItemData(ItemID).name.c_str(); }
+	int GetBuyPrice() const { return GetItemData(ItemID).buyPrice; }
+	int GetSellPrice() const { return GetItemData(ItemID).sellPrice; }
+
+	bool IsEmpty() const { return ItemID == noItem; }
+	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
+	bool IsUseble() const { return GetHeal() > 0; }
+
+	//아이템 효과 호출
+	ITEMTYPE GetEquipType() const { return GetItemData(ItemID).slot; }
+	int GetAtk() const { return GetItemData(ItemID).atk; }
+	int GetDef() const { return GetItemData(ItemID).def; }
+	int GetPlusHp() const { return GetItemData(ItemID).plushp; }
+	int GetHeal() const { return GetItemData(ItemID).heal; }
+
+	const std::string& GetDescription() const { return GetItemData(ItemID).description; }
 };
 
 enum EQUIPSLOT {
@@ -44,47 +78,10 @@ const char* const EQUIPSLOT_NAME[EQUIPSLOT_END]{
 	"무기", "머리", "몸", "다리", "발", "장신구1", "장신구2", "장신구3"
 };
 
-struct ItemData {
-	const char* name;
-	int buyPrice;
-	int sellPrice;
-	ITEMTYPE slot;
-	int atk;
-	int def;
-	int plushp;
-	int heal;
-};
 
-const ItemData  ITEM_TABLE[ITEM_COUNT] = {
-	//새로운 것 추가는 늘 맨 아래. Enum 순서와 맞게 쓸 것
-	//   이름   | 구매가 | 판매가 | 종류 | 공격 | 방어 | 추가 HP | 힐량
-	{ "비어 있음", 0, 0, NONE_EQUIP, 0, 0, 0, 0 },
-	{ "슬라임 조각", 10, 5, NONE_EQUIP, 0, 0, 0, 0 },
-	{ "견과류", 5, 3, NONE_EQUIP, 0, 0, 0, 0 },
-	{ "나무 검", 10, 7, 	EQUIP_WEAPON, 3, 0, 0, 0 },
-	{ "나뭇잎 왕관", 8, 4, EQUIP_HEAD, 0, 2, 10, 0 },
-	{ "꽃 반지", 6, 4, EQUIP_ACCESSORY, 0, 1, 30, 0 },
-	{ "회복 포션", 5, 2, NONE_EQUIP, 0, 0, 0, 30 },
-};
 
-struct ITEM {
-	ITEMLIST ItemID = noItem;
 
-	const char* GetName() const { return ITEM_TABLE[ItemID].name; }
-	int GetBuyPrice() const { return ITEM_TABLE[ItemID].buyPrice; }
-	int GetSellPrice() const { return ITEM_TABLE[ItemID].sellPrice; }
-		
-	bool IsEmpty() const { return ItemID == noItem; }
-	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
-	bool IsUseble() const { return GetHeal() > 0; }
 
-	//아이템 효과 호출
-	ITEMTYPE GetEquipType() const { return ITEM_TABLE[ItemID].slot; }
-	int GetAtk() const {return ITEM_TABLE[ItemID].atk; }
-	int GetDef() const {return ITEM_TABLE[ItemID].def; }
-	int GetPlusHp() const {return ITEM_TABLE[ItemID].plushp; }
-	int GetHeal() const {return ITEM_TABLE[ItemID].heal; }
-};
 
 //인벤토리 유틸리티
 int SelectInvenSlot(Player& player);

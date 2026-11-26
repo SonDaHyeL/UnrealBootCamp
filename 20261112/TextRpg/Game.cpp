@@ -2,10 +2,17 @@
 #include "Game.h"
 #include "Battle.h"
 #include "SaveLoad.h"
+#include "DataTable.h"
 
 using namespace std;
 
 void Game::Run() {
+	string error;
+	if (!LoadGameData(error)) {
+		cout << "\n (!) 게임 데이터를 불러오지 못했습니다.\n " << error << "\n\n";
+		system("pause");
+		return;
+	}
 	UI::Init();
 	LoadOrCreate();
 	MainMenu();
@@ -236,24 +243,22 @@ Game::Scene Game::Store() {
 }
 
 void Game::BuyMenu() {
-	const ITEMLIST goods[] = { heal_potion, wooden_sword, leaf_crown, flower_ring };
+	vector<ITEMLIST> goods = GetShopItems();
 
 	UI::Log("");
 	UI::Log("'늘 좋은 물건만 들여오고 있답니다!'");
-	UI::Log(" - 회복 포션 : 별로 맛은 없다. (HP +30)");
-	UI::Log(" - 나무 검 : 어설프지만 튼튼하다! (ATK +3)");
-	UI::Log(" - 나뭇잎 왕관 : 나는 숲속의 왕이다. (DEF +2 & MAX HP +10)");
-	UI::Log(" - 꽃 반지 : 정성스레 엮었다. (DEF +1 & MAX HP +30)");
+	for (ITEMLIST id : goods)
+		UI::Log(" - " + GetItemData(id).name + " : " + GetItemData(id).description);
 
-	// 선택지: 1~4번은 상품 (이름과 가격은 ITEM_TABLE에서), 마지막 번호는 나가기
+	// 선택지: 상품들, 마지막 번호는 나가기
 	vector<string> options;
 	for (ITEMLIST id : goods)
-		options.push_back(string(ITEM_TABLE[id].name) + " (" + to_string(ITEM_TABLE[id].buyPrice) + "G)");
+		options.push_back(GetItemData(id).name + " (" + to_string(GetItemData(id).buyPrice) + "G)");
 	options.push_back("아무것도 사지 않는다");
 
 	while (true) {
 		int input = UI::Menu(player, options);
-		if (input == (int)options.size()) {      // 마지막 번호 = 나가기
+		if (input == (int)options.size()) {
 			UI::Log("'에이, 조금만 더 보고 가시지!'");
 			return;
 		}

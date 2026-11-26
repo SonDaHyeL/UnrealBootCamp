@@ -23,10 +23,6 @@ namespace {
 	const int JOB_MIN = 1;
 	const int JOB_MAX = 4;
 
-	// 파일에서 읽은 숫자가 유효한 아이템 ID인지 확인
-	bool IsValidItemId(int id) {
-		return id >= 0 && id < ITEM_COUNT;
-	}
 }
 
 bool HasSaveData() {
@@ -106,19 +102,13 @@ bool LoadData(Player& player) {
 	for (int i = 0; i < INVEN_SIZE; ++i) {
 		int id = 0;
 		in >> id;
-		if (!IsValidItemId(id)) {
-			return false;
-		}
-		loaded.inven.SetSlot(i, static_cast<ITEMLIST>(id));
+		loaded.inven.SetSlot(i, IsValidItem(id) ? id : noItem);   // 지워진 아이템은 빈 칸으로
 	}
 
 	for (int i = 0; i < EQUIPSLOT_END; ++i) {
 		int id = 0;
 		in >> id;
-		if (!IsValidItemId(id)) {
-			return false;
-		}
-		loaded.equip[i].ItemID = static_cast<ITEMLIST>(id);
+		loaded.equip[i].ItemID = IsValidItem(id) ? id : noItem;
 	}
 
 	if (in.fail()) {

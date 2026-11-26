@@ -7,7 +7,7 @@ Enemy::Enemy(int type) {
 		attack = 4;
 		defense = 1;
 		maxHp = 20;
-		dropItem = slime_shard;
+		dropItem = 1;
 		dropExp = 4;
 		break;
 	case 2:
@@ -15,7 +15,7 @@ Enemy::Enemy(int type) {
 		attack = 3;
 		defense = 2;
 		maxHp = 15;
-		dropItem = nuts;
+		dropItem = 2;
 		dropExp = 2;
 		break;
 	}

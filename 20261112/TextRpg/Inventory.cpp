@@ -1,7 +1,7 @@
 ﻿#include "Inventory.h"
 
 bool Inventory::Add(ITEMLIST id) {
-	if (id <= noItem || id >= ITEM_COUNT) return false;
+	if (!IsValidItem(id)) return false;
 
 	int idx = FindEmptySlot();
 	if (idx == -1) return false;

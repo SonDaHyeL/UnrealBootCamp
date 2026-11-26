@@ -29,8 +29,8 @@ int SelectInvenSlot(Player& player) {
 
 // ::인벤토리:: 아이템 획득 / 버림
 void GetItem(Player& player, ITEMLIST ItemID) {
-	if (ItemID <= noItem || ItemID >= ITEM_COUNT) return;
-	string name = ITEM_TABLE[ItemID].name;
+	if (!IsValidItem(ItemID)) return;
+	string name = GetItemData(ItemID).name;
 
 	while (true) {
 		if (player.GetInven().Add(ItemID)) {
