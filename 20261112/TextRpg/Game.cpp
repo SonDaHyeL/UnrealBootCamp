@@ -247,9 +247,10 @@ void Game::BuyMenu() {
 
 	UI::Log("");
 	UI::Log("'늘 좋은 물건만 들여오고 있답니다!'");
+	UI::Log("");
 	for (ITEMLIST id : goods)
 		UI::Log(" - " + GetItemData(id).name + " : " + GetItemData(id).description);
-
+	UI::Log("");
 	// 선택지: 상품들, 마지막 번호는 나가기
 	vector<string> options;
 	for (ITEMLIST id : goods)
