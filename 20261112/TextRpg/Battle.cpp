@@ -75,6 +75,7 @@ void Fight(Player& player, Enemy& enemy) {
 	UI::SetTitle("전 투");
 	UI::ClearLog();
 	UI::Log(enemy.GetName() + "이/가 나타났습니다!");
+	if (!enemy.GetDescription().empty()) UI::Log(enemy.GetDescription());
 
 	while (!player.IsDead() && !enemy.IsDead()) {
 		int input = UI::Menu(player, { "공격한다", "방어한다", "아이템 사용","도망간다" }, 1, &enemy);
@@ -115,7 +116,18 @@ void Fight(Player& player, Enemy& enemy) {
 	UI::Log(enemy.GetName() + "이/가 쓰러졌습니다!");
 	UI::Log("> 이겼다!");
 	player.AddExp(enemy.GetDropExp());
-	GetItem(player, enemy.GetDropItem());
+
+	if (enemy.GetDropGold() > 0) {
+		player.AddGold(enemy.GetDropGold());
+		UI::Log(">> " + to_string(enemy.GetDropGold()) + "골드를 얻었습니다!");
+	}
+
+	GetItem(player, enemy.GetDropItem());                     // 0(없음)이면 GetItem이 알아서 넘어감
+
+	if (RandomRange(0.0, 100.0) < enemy.GetRareChance()) {    // 희귀확률 %
+		UI::Log("!! 희귀 아이템 발견 !!");
+		GetItem(player, enemy.GetRareItem());
+	}
 
 	if (enemy.GetName() == "슬라임" && player.HasQuest()) {
 		UI::Log("");

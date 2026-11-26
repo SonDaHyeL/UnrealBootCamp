@@ -302,30 +302,34 @@ Game::Scene Game::Hunting() {
 	UI::ClearLog();
 	UI::Log("사나운 몬스터 주의! 팻말이 붙어있습니다.");
 
-	while (true) {
-		int input = UI::Menu(player, { "인벤토리 관리", "슬라임을 사냥한다", "다람쥐를 사냥한다",
-									   "마을로 돌아간다", "모험을 종료한다" });
-		switch (input) {
-		case 1: InvenMenu(); break;
-		case 2:
-		case 3:
-		{
-			Enemy enemy(input - 1);            // 선택 2,3 → 적 종류 1(슬라임), 2(다람쥐)
-			Fight(player, enemy);
-			UI::SetTitle("사 냥 터");          // 전투 로그는 남겨두고 제목만 되돌림
+	// 선택지: 1 인벤토리 | 2~ 몬스터들 (표에서 자동) | 마을 | 종료
+	vector<int> monsters = GetEnemyIds();
+	vector<string> options = { "인벤토리 관리" };
 
-			if (player.IsDead()) {
-				UI::Log("");
-				UI::Log(">> GAME OVER...");
-				UI::Log("> 이런...(겨우 체력을 회복하고 다시 일어나기.)");
-				UI::Menu(player, { "메인 메뉴로 돌아간다" });   // pause 대신: 확인용 선택지 하나
-				player.Revive();
-				return Scene::QUIT;
-			}
-			break;
-		}
-		case 4: return Scene::TOWN;
-		case 5: return Scene::QUIT;
+	for (int id : monsters)	options.push_back(GetEnemyData(id).name + "을/를 사냥한다");
+	options.push_back("마을로 돌아간다");
+	options.push_back("모험을 종료한다");
+
+	const int TOWN_NO = (int)options.size() - 1;
+	const int QUIT_NO = (int)options.size();
+
+	while (true) {
+		int input = UI::Menu(player, options);
+		if (input == 1) { InvenMenu(); continue; }
+		if (input == TOWN_NO) return Scene::TOWN;
+		if (input == QUIT_NO) return Scene::QUIT;
+
+		Enemy enemy(monsters[input - 2]);   // 2번부터 몬스터
+		Fight(player, enemy);
+		UI::SetTitle("사 냥 터");
+
+		if (player.IsDead()) {
+			UI::Log("");
+			UI::Log(">> GAME OVER...");
+			UI::Log("> 이런...(겨우 체력을 회복하고 다시 일어나기.)");
+			UI::Menu(player, { "메인 메뉴로 돌아간다" });
+			player.Revive();
+			return Scene::QUIT;
 		}
 	}
 }

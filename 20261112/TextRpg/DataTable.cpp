@@ -1,5 +1,6 @@
 ﻿#include "DataTable.h"
 #include "Object.h"
+#include "Enemy.h"
 #include <fstream>
 #include <vector>
 #include <cstdlib>
@@ -7,6 +8,7 @@ using namespace std;
 
 namespace {
 	vector<ItemData> itemTable;   // 칸 번호 = 아이템 ID (0번은 빈 칸)
+	vector<EnemyData> enemyTable;   // 칸 번호 = enemy ID (0번은 빈 칸)
 
 	// 앞뒤 공백 제거
 	string Trim(const string& s) {
@@ -109,11 +111,69 @@ namespace {
 		if (itemTable.size() <= 1) { error = path + "에 아이템이 하나도 없습니다."; return false; }
 		return true;
 	}
+
+
+	bool LoadEnemies(const string& path, string& error) {
+		ifstream in(path);
+		if (!in) { error = path + " 파일을 열 수 없습니다."; return false; }
+
+		const int FIELD_COUNT = 11;
+		enemyTable.assign(1, EnemyData());
+
+		string line;
+		int lineNo = 1;
+		getline(in, line);                         // 제목 줄 건너뜀
+		while (getline(in, line)) {
+			++lineNo;
+			if (!line.empty() && line.back() == '\r') line.pop_back();
+			vector<string> f = SplitCsv(line, FIELD_COUNT);
+			if (f[0].empty()) continue;
+
+			string where = path + " " + to_string(lineNo) + "번째 줄: ";
+			if ((int)f.size() < FIELD_COUNT) { error = where + "칸 수가 부족합니다."; return false; }
+
+			int id = 0;
+			if (!ToInt(f[0], id) || id <= 0) { error = where + "ID는 1 이상의 숫자여야 합니다."; return false; }
+
+			EnemyData d;
+			d.exists = true;
+			d.name = f[1];
+			if (d.name.empty()) { error = where + "이름이 비어 있습니다."; return false; }
+
+			// 숫자 칸 8개 (공격~희귀확률)
+			const char* colName[] = { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률" };
+			int* target[] = { &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance };
+			for (int c = 0; c < 8; ++c) {
+				if (!ToInt(f[2 + c], *target[c])) {
+					error = where + colName[c] + " 칸이 숫자가 아닙니다.";
+					return false;
+				}
+			}
+			d.description = f[10];
+
+			// 값 검사 (아이템 ID는 items.csv에 실제로 있어야 함)
+			if (d.maxHp < 1) { error = where + "HP는 1 이상이어야 합니다."; return false; }
+			if (d.dropItem != noItem && !IsValidItem(d.dropItem)) {
+				error = where + "드롭아이템ID " + to_string(d.dropItem) + "번은 items.csv에 없습니다."; return false;
+			}
+			if (d.rareChance < 0 || d.rareChance > 100) { error = where + "희귀확률은 0~100이어야 합니다."; return false; }
+			if (d.rareChance > 0 && !IsValidItem(d.rareItem)) {
+				error = where + "희귀드롭ID " + to_string(d.rareItem) + "번은 items.csv에 없습니다."; return false;
+			}
+
+			if (id >= (int)enemyTable.size()) enemyTable.resize(id + 1);
+			if (enemyTable[id].exists) { error = where + "ID " + to_string(id) + "번이 중복되었습니다."; return false; }
+			enemyTable[id] = d;
+		}
+
+		if (enemyTable.size() <= 1) { error = path + "에 몬스터가 하나도 없습니다."; return false; }
+		return true;
+	}
 }
 
 // ===== 공개 함수 =====
 bool LoadGameData(string& error) {
-	return LoadItems("items.csv", error);   // 2단계에서 monsters.csv도 여기 추가
+	return LoadItems("items.csv", error) && LoadEnemies("monsters.csv", error);
 }
 
 const ItemData& GetItemData(ITEMLIST id) {
@@ -130,5 +190,18 @@ vector<ITEMLIST> GetShopItems() {
 	vector<ITEMLIST> list;
 	for (int id = 1; id < (int)itemTable.size(); ++id)
 		if (itemTable[id].exists && itemTable[id].inShop) list.push_back(id);
+	return list;
+}
+
+const EnemyData& GetEnemyData(int id) {
+	static const EnemyData EMPTY;
+	if (id <= 0 || id >= (int)enemyTable.size() || !enemyTable[id].exists) return EMPTY;
+	return enemyTable[id];
+}
+
+vector<int> GetEnemyIds() {
+	vector<int> list;
+	for (int id = 1; id < (int)enemyTable.size(); ++id)
+		if (enemyTable[id].exists) list.push_back(id);
 	return list;
 }

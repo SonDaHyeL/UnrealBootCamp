@@ -2,29 +2,52 @@
 #define ENEMY_H
 
 #include <string>
+#include <vector>
 #include "Object.h"
 #include "Character.h"
 
-class Enemy : public Character {
-private:
+struct EnemyData {
+	std::string name;
+	std::string description;
+
+	bool exists = false;
 	int attack = 0;
 	int defense = 0;
 	int maxHp = 0;
+	int exp = 0;
+	int gold = 0;
+
+	int rareChance = 0;
 	ITEMLIST dropItem = noItem;
-	int dropExp = 0;
+	ITEMLIST rareItem = noItem;
+};
+
+
+const EnemyData& GetEnemyData(int id);
+std::vector<int> GetEnemyIds();
+
+class Enemy : public Character {
+private:
+	int id = 0;
+	const EnemyData& Data() const { return GetEnemyData(id); }
+
 
 public:
-	//explicit : 생성자나 변환 함수가 의도치 않게 자동 형변환되는 것을 막는 키워드 (암시적 형변환(Implicit Conversion)을 막음)
-	// 발자가 명시적으로 객체를 생성하도록 강제하는 키워드!
-	explicit Enemy(int type);
+	explicit Enemy(int ememyId);
 
-	int GetAttack() const override { return attack; }
-	int GetDefense() const override { return defense; }
-	int GetMaxHp() const override { return maxHp; }
+	int GetId() const { return id; }
+	int GetAttack() const override { return Data().attack; }
+	int GetDefense() const override { return Data().defense; }
+	int GetMaxHp() const override { return Data().maxHp; }
 
-	ITEMLIST GetDropItem() const { return dropItem; }
-	int GetDropExp() const { return dropExp; }
+	int GetDropExp() const { return Data().exp; }
+	int GetDropGold() const { return Data().gold; }
+	ITEMLIST GetDropItem() const { return Data().dropItem; }
+	ITEMLIST GetRareItem() const { return Data().rareItem; }
 
+	int GetRareChance() const { return Data().rareChance; }
+
+	const std::string& GetDescription() const { return Data().description; }
 };
 
 #endif // !ENEMY_H
