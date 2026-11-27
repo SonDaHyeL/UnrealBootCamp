@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include "Character.h"
 
 enum class SkillEffect { ATTACK, PIERCE, CRITICAL, GUARD, HEAL };   // 공격, 방어무시, 치명타, 방어, 회복
 
@@ -15,6 +16,9 @@ struct SkillData {
 	SkillEffect effect = SkillEffect::ATTACK;
 	int power = 100;             // 배율 %
 	int hits = 1;                // 공격 횟수
+	Status status = Status::NONE;   // 추가 상태이상
+	int statusChance = 0;           // 걸릴 확률 %
+	int statusTurns = 0;            // 지속 턴
 	std::string description;
 };
 

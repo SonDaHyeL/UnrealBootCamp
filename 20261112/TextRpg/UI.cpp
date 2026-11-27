@@ -126,12 +126,14 @@ namespace {
 
 	vector<string> EnemyPanel(const Enemy& e) {
 		return {
-			e.GetName(),
-			"",
-			"HP " + HpBar(e.GetHp(), e.GetMaxHp()),
-			"   " + to_string(e.GetHp()) + " / " + to_string(e.GetMaxHp()),
-			"",
-			"ATK " + to_string(e.GetAttack()) + "  DEF " + to_string(e.GetDefense()),
+					e.GetName(),
+					"",
+					"HP " + HpBar(e.GetHp(), e.GetMaxHp()),
+					"   " + to_string(e.GetHp()) + " / " + to_string(e.GetMaxHp()),
+					"",
+					"ATK " + to_string(e.GetAttack()) + "  DEF " + to_string(e.GetDefense()),
+					"",
+					e.GetStatusText(),
 		};
 	}
 
@@ -142,11 +144,11 @@ namespace {
 			"HP " + HpBar(p.GetHp(), p.GetMaxHp()) + " " + to_string(p.GetHp()) + "/" + to_string(p.GetMaxHp()),
 			"MP " + HpBar(p.GetMp(), p.GetMaxMp()) + " " + to_string(p.GetMp()) + "/" + to_string(p.GetMaxMp()),
 			"ATK " + to_string(p.GetAttack()) + "  DEF " + to_string(p.GetDefense()),
+			p.GetStatusText(),                          // 상태이상 (없으면 빈 줄 → 퀘스트와의 구분선 역할)
 		};
 		if (p.HasQuest()) {
 			const QuestData& q = GetQuestData(p.GetQuestId());
 			bool done = p.GetQuestKills() >= q.count;
-			v.push_back("");
 			v.push_back("Q " + q.name);
 			v.push_back("  " + to_string(p.GetQuestKills()) + "/" + to_string(q.count) + (done ? " (보고하자!)" : ""));
 		}

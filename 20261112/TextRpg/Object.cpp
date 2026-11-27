@@ -61,11 +61,11 @@ bool UseItem(Player& player, int idx) {
 		return false;
 	}
 
-	// 회복할 게 하나라도 있어야 사용 (HP 포션인데 HP가 가득이면 낭비 방지)
 	bool needHp = item.GetHeal() > 0 && player.GetHp() < player.GetMaxHp();
 	bool needMp = item.GetMpHeal() > 0 && player.GetMp() < player.GetMaxMp();
-	if (!needHp && !needMp) {
-		UI::Log(">> 지금은 쓸 필요가 없습니다! (이미 가득 차 있음)");
+	bool needCure = item.GetCure() == Status::POISON && player.IsPoisoned();
+	if (!needHp && !needMp && !needCure) {
+		UI::Log(">> 지금은 쓸 필요가 없습니다!");
 		return false;
 	}
 
@@ -77,6 +77,10 @@ bool UseItem(Player& player, int idx) {
 	if (item.GetMpHeal() > 0) {
 		player.RestoreMp(item.GetMpHeal());
 		UI::Log("   MP를 " + to_string(item.GetMpHeal()) + "만큼 회복합니다.");
+	}
+	if (needCure) {
+		player.CurePoison();
+		UI::Log("   독이 말끔히 사라졌습니다!");
 	}
 	player.GetInven().Remove(idx);
 	return true;
@@ -124,6 +128,7 @@ string GetItemEffect(const ITEM& item) {
 	if (item.GetPlusHp() > 0) info += "MAX HP +" + to_string(item.GetPlusHp()) + " ";
 	if (item.GetHeal() > 0)   info += "HP 회복 +" + to_string(item.GetHeal()) + " ";
 	if (item.GetMpHeal() > 0) info += "MP 회복 +" + to_string(item.GetMpHeal()) + " ";
+	if (item.GetCure() == Status::POISON) info += "해독 ";
 	if (info.empty())         info = "특별한 효과 없음 ";
 	return info;
 }

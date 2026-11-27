@@ -63,17 +63,18 @@ namespace {
 
 	// attacker → target 공격. 맞는 쪽의 방어 상태(GetGuard)는 자동으로 반영
 	// power / pierce / forceCrit: 스킬용 (데미지 배율 / 방어 무시 / 확정 치명타)
-	void Attack(const Character& attacker, Character& target,
+	bool Attack(const Character& attacker, Character& target,
 		double power = 1.0, bool pierce = false, bool forceCrit = false) {
 		int defense = pierce ? 0 : (int)(target.GetDefense() * target.GetGuard());
 		DamageResult r = CalcDamage(attacker.GetAttack(), defense, power, forceCrit);
 		if (r.miss) {
 			UI::Log(attacker.GetName() + "의 공격! " + target.GetName() + "이/가 공격을 피했습니다!");
-			return;
+			return false;
 		}
 		UI::Log(attacker.GetName() + "의 공격! " + (r.critical ? "치명타! " : "")
 			+ target.GetName() + "에게 " + to_string(r.damage) + "의 데미지를 주었습니다.");
 		target.TakeDamage(r.damage);
+		return true;
 	}
 
 	// 스킬 효과 설명 한 줄 (스킬 목록에서 커서를 올렸을 때)
@@ -88,6 +89,28 @@ namespace {
 		}
 		return "";
 	}
+	string StatusEffectText(const SkillData& s) {
+		if (s.status == Status::NONE) return "";
+		string name = (s.status == Status::POISON) ? "독" : "기절";
+		return "추가 효과: " + name + " (확률 " + to_string(s.statusChance) + "%, " + to_string(s.statusTurns) + "턴)";
+	}
+
+	// 확률에 당첨되면 target에게 스킬의 상태이상을 건다
+	void ApplyStatus(Character& target, const SkillData& s) {
+		if (s.status == Status::NONE || target.IsDead()) return;
+		if (RandomRange(0.0, 100.0) >= s.statusChance) return;
+
+		if (s.status == Status::POISON) {
+			target.AddPoison(s.statusTurns);
+			UI::Log(target.GetName() + "은/는 독에 걸렸습니다! (" + to_string(s.statusTurns) + "턴)");
+		}
+		else {
+			bool wasStunned = target.IsStunned();
+			target.AddStun(s.statusTurns);
+			if (!wasStunned)
+				UI::Log(target.GetName() + "은/는 기절했습니다! (" + to_string(s.statusTurns) + "턴 동안 행동 불가)");
+		}
+	}
 
 	// 스킬 효과 처리 (플레이어·몬스터 공용). user가 target에게 스킬 s를 쓴다
 	void ApplySkill(Character& user, Character& target, const SkillData& s) {
@@ -95,11 +118,16 @@ namespace {
 		switch (s.effect) {
 		case SkillEffect::ATTACK:
 		case SkillEffect::PIERCE:
-		case SkillEffect::CRITICAL:
-			for (int i = 0; i < s.hits && !target.IsDead(); ++i)
-				Attack(user, target, s.power / 100.0,
-					s.effect == SkillEffect::PIERCE, s.effect == SkillEffect::CRITICAL);
+		case SkillEffect::CRITICAL: {
+			bool anyHit = false;
+			for (int i = 0; i < s.hits && !target.IsDead(); ++i) {
+				if (Attack(user, target, s.power / 100.0,
+					s.effect == SkillEffect::PIERCE, s.effect == SkillEffect::CRITICAL))
+					anyHit = true;
+			}
+			if (anyHit) ApplyStatus(target, s);       // 한 대라도 맞았으면 상태이상 시도
 			break;
+		}
 		case SkillEffect::GUARD:
 			user.SetGuard(s.power / 100.0);
 			UI::Log(user.GetName() + "은/는 몸을 단단히 굳혔습니다! (방어력 " + to_string(s.power) + "%)");
@@ -129,6 +157,7 @@ namespace {
 			e.tag = "MP " + to_string(s.mp);
 			e.info.push_back("[" + s.name + "] " + SkillEffectText(s));
 			e.info.push_back(s.description);
+			if (s.status != Status::NONE) e.info.push_back(StatusEffectText(s));
 			entries.push_back(e);
 		}
 
@@ -156,9 +185,44 @@ namespace {
 		return UseItem(player, idx);                       // 쓸 필요 없으면 false
 	}
 
-	// 몬스터의 턴: 스킬확률에 당첨되면 스킬, 아니면 일반 공격
-	void EnemyTurn(Enemy& enemy, Player& player) {
-		enemy.ResetGuard();                                // 지난 턴의 방어 효과 끝
+	// 턴 시작 처리 (플레이어·몬스터 공용): 방어 초기화 → 독 데미지 → 기절 확인
+	// 이번 턴에 행동할 수 있으면 true
+	bool StartTurn(Character& c) {
+		c.ResetGuard();                                    // 지난 턴의 방어 효과 끝
+
+		int poison = c.TickPoison();
+		if (poison > 0) {
+			UI::Log(c.GetName() + "은/는 독 때문에 " + to_string(poison) + "의 데미지를 입었습니다!");
+			if (c.IsDead()) return false;
+		}
+		if (c.TickStun()) {
+			UI::Log(c.GetName() + "은/는 기절해서 움직일 수 없습니다!");
+			return false;
+		}
+		return true;
+	}
+
+	// 플레이어 행동 고르기. 턴을 쓰는 행동을 할 때까지 반복. 도망쳤으면 true
+	bool PlayerTurn(Player& player, Enemy& enemy) {
+		while (true) {
+			int input = UI::Menu(player, { "공격한다", "스킬 사용", "방어한다", "아이템 사용", "도망간다" }, 1, &enemy);
+			switch (input) {
+			case 1: Attack(player, enemy); return false;
+			case 2: if (UseSkill(player, enemy)) return false; break;      // 취소·MP 부족이면 다시 고르기
+			case 3:
+				player.SetGuard(2.0);
+				UI::Log(player.GetName() + "은/는 방어 자세를 취했습니다! (방어력 2배)");
+				return false;
+			case 4: if (UseItemInBattle(player)) return false; break;      // 취소면 다시 고르기
+			case 5:
+				UI::Log("> 당신은 도망쳤습니다... 이런...");
+				return true;
+			}
+		}
+	}
+
+	// 몬스터 행동: 스킬확률에 당첨되면 스킬, 아니면 일반 공격
+	void EnemyAct(Enemy& enemy, Player& player) {
 		const SkillData& s = GetSkillData(enemy.GetSkill());
 		if (s.exists && RandomRange(0.0, 100.0) < enemy.GetSkillChance())
 			ApplySkill(enemy, player, s);
@@ -176,26 +240,18 @@ void Fight(Player& player, Enemy& enemy) {
 	if (!enemy.GetDescription().empty()) UI::Log(enemy.GetDescription());
 
 	while (!player.IsDead() && !enemy.IsDead()) {
-		player.ResetGuard();                               // 내 턴 시작: 지난 턴의 방어 효과 끝
-		int input = UI::Menu(player, { "공격한다", "스킬 사용", "방어한다", "아이템 사용", "도망간다" }, 1, &enemy);
+		// ── 내 턴 ──
 		UI::Log("");
-
-		bool turnUsed = true;                              // false면 적이 행동하지 않음 (취소 등)
-		switch (input) {
-		case 1: Attack(player, enemy); break;
-		case 2: turnUsed = UseSkill(player, enemy); break;
-		case 3:
-			player.SetGuard(2.0);
-			UI::Log(player.GetName() + "은/는 방어 자세를 취했습니다! (방어력 2배)");
-			break;
-		case 4: turnUsed = UseItemInBattle(player); break;
-		case 5:
-			UI::Log("> 당신은 도망쳤습니다... 이런...");
+		if (StartTurn(player) && PlayerTurn(player, enemy)) {   // 행동할 수 있으면 행동, 도망치면 끝
+			player.ClearStatus();
 			return;
 		}
+		if (player.IsDead() || enemy.IsDead()) break;
 
-		if (turnUsed && !enemy.IsDead()) EnemyTurn(enemy, player);   // 적의 반격은 여기 한 곳에서만
+		// ── 적의 턴 ──
+		if (StartTurn(enemy)) EnemyAct(enemy, player);
 	}
+	player.ClearStatus();                                      // 전투가 끝나면 상태이상도 끝
 
 	if (player.IsDead()) {
 		UI::Log(">> 당신은 쓰러졌습니다...");
@@ -238,4 +294,5 @@ void Fight(Player& player, Enemy& enemy) {
 		}
 	}
 	UI::Log("> 야호!");
+
 }

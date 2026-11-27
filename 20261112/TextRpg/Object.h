@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "Character.h"
 
 class Player;
 const int INVEN_SIZE = 8;
@@ -32,6 +33,7 @@ struct ItemData {
 	int plushp = 0;
 	int heal = 0;
 	int mpheal = 0;
+	Status cure = Status::NONE;
 	bool inShop = false;              // 상점판매 Y/N
 	std::string description;
 };
@@ -51,7 +53,7 @@ struct ITEM {
 
 	bool IsEmpty() const { return ItemID == noItem; }
 	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
-	bool IsUseble() const { return GetHeal() > 0 || GetMpHeal() > 0; }
+	bool IsUseble() const { return GetHeal() > 0 || GetMpHeal() > 0 || GetCure() != Status::NONE; }
 
 	//아이템 효과 호출
 	ITEMTYPE GetEquipType() const { return GetItemData(ItemID).slot; }
@@ -62,6 +64,10 @@ struct ITEM {
 	int GetMpHeal() const { return GetItemData(ItemID).mpheal; }
 
 	const std::string& GetDescription() const { return GetItemData(ItemID).description; }
+
+	//상태이상 관련 아이템
+	Status GetCure() const { return GetItemData(ItemID).cure; }
+	
 };
 
 enum EQUIPSLOT {

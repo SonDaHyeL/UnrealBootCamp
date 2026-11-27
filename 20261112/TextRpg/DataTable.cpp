@@ -81,7 +81,12 @@ namespace {
 		}
 		return false;
 	}
-
+	bool ToStatus(const string& s, Status& out) {
+		if (s.empty() || s == "-") { out = Status::NONE;   return true; }
+		if (s == "독") { out = Status::POISON; return true; }
+		if (s == "기절") { out = Status::STUN;   return true; }
+		return false;
+	}
 	// ===================== CSV 공통 처리 =====================
 
 	// CSV 한 줄 (제목 줄과 빈 줄은 이미 걸러진 상태)
@@ -158,7 +163,7 @@ namespace {
 
 	bool LoadItems(const string& path, string& error) {
 		vector<CsvRow> rows;
-		if (!ReadCsv(path, 12, rows, error)) return false;
+		if (!ReadCsv(path, 13, rows, error)) return false;
 
 		itemTable.assign(1, ItemData());                    // 0번 = 빈 칸
 		for (const CsvRow& row : rows) {
@@ -170,8 +175,8 @@ namespace {
 			}
 			if (!ReadInts(row, 3, { "구매가", "판매가", "공격", "방어", "추가HP", "회복량", "MP회복"},
 				{ &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal, &d.mpheal }, error)) return false;
-			d.inShop = (row.f[10] == "Y" || row.f[10] == "y");
-			d.description = row.f[11];
+			d.inShop = (row.f[11] == "Y" || row.f[10] == "y");
+			d.description = row.f[12];
 
 			if (!PutRow(itemTable, row, d, error)) return false;
 		}
@@ -237,7 +242,7 @@ namespace {
 
 	bool LoadSkills(const string& path, string& error) {
 		vector<CsvRow> rows;
-		if (!ReadCsv(path, 9, rows, error)) return false;
+		if (!ReadCsv(path, 12, rows, error)) return false;
 
 		skillTable.assign(1, SkillData());
 		for (const CsvRow& row : rows) {
@@ -248,10 +253,15 @@ namespace {
 			if (!ReadInts(row, 3, { "습득Lv", "MP" }, { &d.level, &d.mp }, error)) return false;
 			if (!ToEffect(row.f[5], d.effect)) { error = row.where + "효과는 공격, 방어무시, 치명타, 방어, 회복 중 하나여야 합니다."; return false; }
 			if (!ReadInts(row, 6, { "배율%", "횟수" }, { &d.power, &d.hits }, error)) return false;
-			d.description = row.f[8];
+			if (!ToStatus(row.f[8], d.status)) { error = row.where + "상태이상은 -, 독, 기절 중 하나여야 합니다."; return false; }
+			if (!ReadInts(row, 9, { "확률%", "지속턴" }, { &d.statusChance, &d.statusTurns }, error)) return false;
+			d.description = row.f[11];
 
 			if (d.level < 1 || d.mp < 0 || d.power < 0 || d.hits < 1) {
 				error = row.where + "습득Lv와 횟수는 1 이상, MP와 배율%는 0 이상이어야 합니다."; return false;
+			}
+			if (d.status != Status::NONE && (d.statusChance < 1 || d.statusChance > 100 || d.statusTurns < 1)) {
+				error = row.where + "상태이상이 있으면 확률%는 1~100, 지속턴은 1 이상이어야 합니다."; return false;
 			}
 			if (!PutRow(skillTable, row, d, error)) return false;
 		}
