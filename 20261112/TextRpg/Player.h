@@ -7,6 +7,8 @@
 #include <string>
 
 const int MAX_LEVEL = 100;
+const int JOB_COUNT = 4;
+const char* const JOB_NAME[JOB_COUNT + 1] = { "", "전사", "궁수", "도적","마법사" };
 
 
 class Player : public Character {
@@ -19,6 +21,9 @@ private:
 	int job = 0;
 	int attack = 0;		int defense = 0;		int basehp = 0;
 	int growAtk = 0;		int growDef = 0;	int growHP = 0;
+
+	int mp = 0;
+	int baseMp = 0; int growMp = 0;
 
 	int gold = 0;
 	int questId = 0;          // 진행 중인 퀘스트 ID (0 = 없음)
@@ -42,6 +47,14 @@ public:
 	int GetDefense() const override { return defense + growDef * (level - 1) + getEquipStats().def; } //레벨 + 정바에 따른 방어력 계산
 	int GetMaxHp() const override { return basehp + growHP * (level - 1) + getEquipStats().hp; } //레벨 + 장비에 따른 최대 체력 계산
 	int GetNeedExp() const { return level * 20; } //다음 레벨까지 경험치 요구량
+
+	//마나 관리
+	int GetMp() const { return mp; }
+	int GetMaxMp() const { return baseMp + growMp * (level - 1); }
+	bool SpendMp(int amount);           // 모자라면 false (안 씀)
+	void RestoreMp(int amount);         // 최대 MP까지
+
+	std::vector<int> GetSkills() const; // 지금 레벨까지 배운 스킬 ID들
 
 	void ShowInfo() const; //캐릭터 정보창 출력
 

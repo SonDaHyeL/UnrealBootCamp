@@ -31,6 +31,7 @@ struct ItemData {
 	int def = 0;
 	int plushp = 0;
 	int heal = 0;
+	int mpheal = 0;
 	bool inShop = false;              // 상점판매 Y/N
 	std::string description;
 };
@@ -50,7 +51,7 @@ struct ITEM {
 
 	bool IsEmpty() const { return ItemID == noItem; }
 	bool IsEquipment() const { return GetEquipType() != NONE_EQUIP; }
-	bool IsUseble() const { return GetHeal() > 0; }
+	bool IsUseble() const { return GetHeal() > 0 || GetMpHeal() > 0; }
 
 	//아이템 효과 호출
 	ITEMTYPE GetEquipType() const { return GetItemData(ItemID).slot; }
@@ -58,6 +59,7 @@ struct ITEM {
 	int GetDef() const { return GetItemData(ItemID).def; }
 	int GetPlusHp() const { return GetItemData(ItemID).plushp; }
 	int GetHeal() const { return GetItemData(ItemID).heal; }
+	int GetMpHeal() const { return GetItemData(ItemID).mpheal; }
 
 	const std::string& GetDescription() const { return GetItemData(ItemID).description; }
 };

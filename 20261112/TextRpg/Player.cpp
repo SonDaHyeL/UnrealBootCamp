@@ -1,5 +1,6 @@
 ﻿#include "Player.h"
 #include "Quest.h"
+#include "Skill.h"
 #include "UI.h"
 
 
@@ -7,30 +8,28 @@ using namespace std;
 
 void Player::Init() {
 	switch (job) {
-	case 1: //전사
-		jobName = "전사";
-		attack = 3;		defense = 3;	basehp = 150;
-		growAtk = 1;	growDef = 2;	growHP = 15;
+	case 1: //전사: 튼튼하고 꾸준함 (HP·방어 높음)
+		attack = 4;  defense = 3;  basehp = 150;  baseMp = 10;
+		growAtk = 2; growDef = 2;  growHP = 15;   growMp = 2;
 		break;
-	case 2: //궁수
-		jobName = "궁수";
-		attack = 3;		defense = 2;	basehp = 100;
-		growAtk = 2;	growDef = 2;	growHP = 10;
+	case 2: //궁수: 균형형
+		attack = 4;  defense = 2;  basehp = 110;  baseMp = 15;
+		growAtk = 2; growDef = 1;  growHP = 10;   growMp = 3;
 		break;
-	case 3: //도적
-		jobName = "도적";
-		attack = 3;		defense = 1;	basehp = 120;
-		growAtk = 3;	growDef = 1;	growHP = 10;
+	case 3: //도적: 공격적이지만 약함 (공격 높음, 방어·HP 낮음)
+		attack = 5;  defense = 1;  basehp = 110;  baseMp = 15;
+		growAtk = 3; growDef = 1;  growHP = 8;    growMp = 2;
 		break;
-	case 4: //마법사
-		jobName = "마법사";
-		attack = 4;		defense = 2;	basehp = 100;
-		growAtk = 3;	growDef = 1;	growHP = 10;
+	case 4: //마법사: 기본 공격은 약하고 스킬로 싸움 (MP 높음)
+		attack = 3;  defense = 1;  basehp = 90;   baseMp = 30;
+		growAtk = 2; growDef = 1;  growHP = 8;    growMp = 5;
 		break;
 	}
+	jobName = JOB_NAME[job];
 	level = 1;
 	exp = 0;
 	hp = GetMaxHp();
+	mp = GetMaxMp();
 }
 
 void Player::ShowInfo() const {
@@ -38,8 +37,13 @@ void Player::ShowInfo() const {
 	UI::Log(":: " + name + " [" + jobName + "] ::");
 	UI::Log(" > 레벨 : " + to_string(level) + "  (다음 LV까지 " + to_string(GetNeedExp() - exp) + " 필요)");
 	UI::Log(" > HP : " + to_string(hp) + " / " + to_string(GetMaxHp()));
+	UI::Log(" > MP : " + to_string(mp) + " / " + to_string(GetMaxMp()));
 	UI::Log(" > 공격력 : " + to_string(GetAttack()) + "  방어력 : " + to_string(GetDefense()));
 	UI::Log(" > 소지금 : " + to_string(gold) + "G");
+
+	string skills;
+	for (int id : GetSkills()) skills += (skills.empty() ? "" : ", ") + GetSkillData(id).name;
+	UI::Log(" > 스킬 : " + (skills.empty() ? string("없음") : skills));
 	if (HasQuest()) {
 		const QuestData& q = GetQuestData(questId);
 		UI::Log(" > 퀘스트 : " + q.name + " (" + to_string(questKills) + "/" + to_string(q.count) + ")");
@@ -76,7 +80,16 @@ void Player::AddExp(int amount) {
 
 		level++;
 		hp = GetMaxHp();
-		UI::Log("=======★ Level UP!!! ★======= LV " + to_string(level - 1) + " -> LV " + to_string(level));
+		mp = GetMaxMp();
+		UI::Log("");
+		UI::Log("=======** Level UP!!! **======= LV " + to_string(level - 1) + " -> LV " + to_string(level));
+		// 이번 레벨에서 새로 배우는 스킬
+		for (int id : GetSkillsFor(job, level)) {
+			if (GetSkillData(id).level == level) {
+				UI::Log("");
+				UI::Log("*** 새 스킬 [" + GetSkillData(id).name + "] 습득! ***");
+			}
+		}
 	}
 }
 
@@ -158,4 +171,20 @@ bool Player::Unequip(int slot) {
 
 	if (hp > GetMaxHp()) hp = GetMaxHp();	// 최대 HP 장비를 벗으면 현재 HP도 맞춰 줄임
 	return true;
+}
+
+//**마나 관리
+bool Player::SpendMp(int amount) {
+	if (mp < amount) return false;
+	mp -= amount;
+	return true;
+}
+
+void Player::RestoreMp(int amount) {
+	mp += amount;
+	if (mp > GetMaxMp()) mp = GetMaxMp();
+}
+
+vector<int> Player::GetSkills() const {
+	return GetSkillsFor(job, level);
 }

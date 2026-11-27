@@ -53,23 +53,32 @@ void DropItem(Player& player) {
 
 // ::인벤토리:: 아이템 사용
 bool UseItem(Player& player, int idx) {
-	if (player.GetInven().IsEmptyAt(idx)) return false; //범위&빈칸 검사 통합
+	if (player.GetInven().IsEmptyAt(idx)) return false;
 	ITEM item = player.GetInven().Get(idx);
 
-	if (!item.IsUseble()) { //사용할 수 있는 아이템이 아니라면 사용 못함
+	if (!item.IsUseble()) {
 		UI::Log(">> [" + string(item.GetName()) + "]은/는 사용할 수 없는 아이템입니다.");
 		return false;
 	}
-	
-	if (player.GetHp() >= player.GetMaxHp()) { //체력이 이미 가득 차 있다면 사용하지 않음
-		UI::Log(">> 이미 HP가 가득 차 있습니다!");
+
+	// 회복할 게 하나라도 있어야 사용 (HP 포션인데 HP가 가득이면 낭비 방지)
+	bool needHp = item.GetHeal() > 0 && player.GetHp() < player.GetMaxHp();
+	bool needMp = item.GetMpHeal() > 0 && player.GetMp() < player.GetMaxMp();
+	if (!needHp && !needMp) {
+		UI::Log(">> 지금은 쓸 필요가 없습니다! (이미 가득 차 있음)");
 		return false;
 	}
 
-	UI::Log(">> [" + string(item.GetName()) + "] 사용! HP를 " + to_string(item.GetHeal()) + "만큼 회복합니다.");
-	player.Heal(item.GetHeal());
+	UI::Log(">> [" + string(item.GetName()) + "] 사용!");
+	if (item.GetHeal() > 0) {
+		player.Heal(item.GetHeal());
+		UI::Log("   HP를 " + to_string(item.GetHeal()) + "만큼 회복합니다.");
+	}
+	if (item.GetMpHeal() > 0) {
+		player.RestoreMp(item.GetMpHeal());
+		UI::Log("   MP를 " + to_string(item.GetMpHeal()) + "만큼 회복합니다.");
+	}
 	player.GetInven().Remove(idx);
-
 	return true;
 }
 
@@ -114,6 +123,7 @@ string GetItemEffect(const ITEM& item) {
 	if (item.GetDef() > 0)    info += "DEF +" + to_string(item.GetDef()) + " ";
 	if (item.GetPlusHp() > 0) info += "MAX HP +" + to_string(item.GetPlusHp()) + " ";
 	if (item.GetHeal() > 0)   info += "HP 회복 +" + to_string(item.GetHeal()) + " ";
+	if (item.GetMpHeal() > 0) info += "MP 회복 +" + to_string(item.GetMpHeal()) + " ";
 	if (info.empty())         info = "특별한 효과 없음 ";
 	return info;
 }

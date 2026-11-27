@@ -17,6 +17,9 @@ struct EnemyData {
 	int exp = 0;
 	int gold = 0;
 
+	int skill = 0;               // 스킬 ID (skills.csv, 0 = 없음)
+	int skillChance = 0;         // 스킬 사용 확률 %
+
 	int rareChance = 0;
 	ITEMLIST dropItem = noItem;
 	ITEMLIST rareItem = noItem;
@@ -44,6 +47,9 @@ public:
 	int GetDropGold() const { return Data().gold; }
 	ITEMLIST GetDropItem() const { return Data().dropItem; }
 	ITEMLIST GetRareItem() const { return Data().rareItem; }
+
+	int GetSkill() const { return Data().skill; }
+	int GetSkillChance() const { return Data().skillChance; }
 
 	int GetRareChance() const { return Data().rareChance; }
 

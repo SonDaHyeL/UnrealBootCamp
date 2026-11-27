@@ -2,6 +2,8 @@
 #include "Object.h"
 #include "Enemy.h"
 #include "Quest.h"
+#include "Skill.h"
+#include "Player.h"
 #include <fstream>
 #include <vector>
 #include <cstdlib>
@@ -11,6 +13,7 @@ namespace {
 	vector<ItemData> itemTable;     // 칸 번호 = 아이템 ID (0번은 빈 칸)
 	vector<EnemyData> enemyTable;   // 칸 번호 = 몬스터 ID (0번은 안 씀)
 	vector<QuestData> questTable;   // 칸 번호 = 퀘스트 ID (0번은 안 씀)
+	vector<SkillData> skillTable;   // 칸 번호 = 스킬 ID (0번은 안 씀)
 
 	// ===================== 글자 다루기 =====================
 
@@ -57,6 +60,24 @@ namespace {
 		if (s == "장신구") { out = EQUIP_ACCESSORY; return true; }
 		for (int i = SLOT_WEAPON; i <= SLOT_FOOT; ++i) {
 			if (s == EQUIPSLOT_NAME[i]) { out = (ITEMTYPE)i; return true; }
+		}
+		return false;
+	}
+
+	// "전사" → 1, "궁수" → 2 ...
+	bool ToJob(const string& s, int& out) {
+		if (s == "몬스터") { out = 0; return true; }
+		for (int j = 1; j <= JOB_COUNT; ++j) {
+			if (s == JOB_NAME[j]) { out = j; return true; }
+		}
+		return false;
+	}
+
+	// "공격" → SkillEffect::ATTACK ...  (enum 순서와 같은 순서로 적을 것)
+	bool ToEffect(const string& s, SkillEffect& out) {
+		const char* names[] = { "공격", "방어무시", "치명타", "방어", "회복" };
+		for (int i = 0; i < 5; ++i) {
+			if (s == names[i]) { out = (SkillEffect)i; return true; }
 		}
 		return false;
 	}
@@ -137,7 +158,7 @@ namespace {
 
 	bool LoadItems(const string& path, string& error) {
 		vector<CsvRow> rows;
-		if (!ReadCsv(path, 11, rows, error)) return false;
+		if (!ReadCsv(path, 12, rows, error)) return false;
 
 		itemTable.assign(1, ItemData());                    // 0번 = 빈 칸
 		for (const CsvRow& row : rows) {
@@ -147,10 +168,10 @@ namespace {
 			if (!ToType(row.f[2], d.slot)) {
 				error = row.where + "종류는 -, 무기, 머리, 몸, 다리, 발, 장신구 중 하나여야 합니다."; return false;
 			}
-			if (!ReadInts(row, 3, { "구매가", "판매가", "공격", "방어", "추가HP", "회복량" },
-				{ &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal }, error)) return false;
-			d.inShop = (row.f[9] == "Y" || row.f[9] == "y");
-			d.description = row.f[10];
+			if (!ReadInts(row, 3, { "구매가", "판매가", "공격", "방어", "추가HP", "회복량", "MP회복"},
+				{ &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal, &d.mpheal }, error)) return false;
+			d.inShop = (row.f[10] == "Y" || row.f[10] == "y");
+			d.description = row.f[11];
 
 			if (!PutRow(itemTable, row, d, error)) return false;
 		}
@@ -161,20 +182,24 @@ namespace {
 
 	bool LoadEnemies(const string& path, string& error) {
 		vector<CsvRow> rows;
-		if (!ReadCsv(path, 11, rows, error)) return false;
+		if (!ReadCsv(path, 13, rows, error)) return false;
 
 		enemyTable.assign(1, EnemyData());
 		for (const CsvRow& row : rows) {
 			EnemyData d;
 			d.exists = true;
 			d.name = row.f[1];
-			if (!ReadInts(row, 2, { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률" },
-				{ &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance }, error)) return false;
-			d.description = row.f[10];
+			if (!ReadInts(row, 2, { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률", "스킬ID", "스킬확률" },
+				{ &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance, &d.skill, &d.skillChance }, error)) return false;
+			d.description = row.f[12];
 
 			if (d.maxHp < 1) { error = row.where + "HP는 1 이상이어야 합니다."; return false; }
 			if (d.rareChance < 0 || d.rareChance > 100) { error = row.where + "희귀확률은 0~100이어야 합니다."; return false; }
 			if (d.rareChance > 0 && d.rareItem == noItem) { error = row.where + "희귀확률이 있으면 희귀드롭ID가 필요합니다."; return false; }
+			if (d.skillChance < 0 || d.skillChance > 100) { error = row.where + "스킬확률은 0~100이어야 합니다."; return false; }
+			if (d.skillChance > 0 && !Find(skillTable, d.skill).exists) {
+				error = row.where + "스킬ID " + to_string(d.skill) + "번은 skills.csv에 없습니다."; return false;
+			}
 			if (!CheckItemId(row, "드롭아이템ID", d.dropItem, error)) return false;
 			if (!CheckItemId(row, "희귀드롭ID", d.rareItem, error)) return false;
 
@@ -209,12 +234,36 @@ namespace {
 		}
 		return true;     // 퀘스트는 0개여도 됨 (촌장이 할 말이 없을 뿐)
 	}
+
+	bool LoadSkills(const string& path, string& error) {
+		vector<CsvRow> rows;
+		if (!ReadCsv(path, 9, rows, error)) return false;
+
+		skillTable.assign(1, SkillData());
+		for (const CsvRow& row : rows) {
+			SkillData d;
+			d.exists = true;
+			d.name = row.f[1];
+			if (!ToJob(row.f[2], d.job)) { error = row.where + "직업은 전사, 궁수, 도적, 마법사, 몬스터 중 하나여야 합니다."; return false; }
+			if (!ReadInts(row, 3, { "습득Lv", "MP" }, { &d.level, &d.mp }, error)) return false;
+			if (!ToEffect(row.f[5], d.effect)) { error = row.where + "효과는 공격, 방어무시, 치명타, 방어, 회복 중 하나여야 합니다."; return false; }
+			if (!ReadInts(row, 6, { "배율%", "횟수" }, { &d.power, &d.hits }, error)) return false;
+			d.description = row.f[8];
+
+			if (d.level < 1 || d.mp < 0 || d.power < 0 || d.hits < 1) {
+				error = row.where + "습득Lv와 횟수는 1 이상, MP와 배율%는 0 이상이어야 합니다."; return false;
+			}
+			if (!PutRow(skillTable, row, d, error)) return false;
+		}
+		return true;     // 스킬이 0개여도 됨
+	}
 }
 
 // ===== 공개 함수 =====
 bool LoadGameData(string& error) {
-	// 읽는 순서 중요: 몬스터는 아이템을, 퀘스트는 몬스터와 아이템을 검사한다
+	// 읽는 순서 중요!
 	return LoadItems("items.csv", error)
+		&& LoadSkills("skills.csv", error)
 		&& LoadEnemies("monsters.csv", error)
 		&& LoadQuests("quests.csv", error);
 }
@@ -223,6 +272,16 @@ const ItemData& GetItemData(ITEMLIST id) { return Find(itemTable, id); }
 bool IsValidItem(ITEMLIST id) { return Find(itemTable, id).exists; }
 const EnemyData& GetEnemyData(int id) { return Find(enemyTable, id); }
 const QuestData& GetQuestData(int id) { return Find(questTable, id); }
+const SkillData& GetSkillData(int id) { return Find(skillTable, id); }
+
+vector<int> GetSkillsFor(int job, int level) {
+	vector<int> list;
+	for (int id = 1; id < (int)skillTable.size(); ++id) {
+		const SkillData& s = skillTable[id];
+		if (s.exists && s.job == job && s.level <= level) list.push_back(id);
+	}
+	return list;
+}
 
 vector<ITEMLIST> GetShopItems() {
 	vector<ITEMLIST> list;

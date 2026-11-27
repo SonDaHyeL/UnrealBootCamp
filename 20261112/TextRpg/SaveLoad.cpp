@@ -7,8 +7,9 @@
 // 저장 파일 형식 (한 줄씩, 저장/불러오기 순서는 반드시 같아야 함)
 //   버전
 //   이름
-//   직업 번호 레벨 경험치 현재HP
+//   직업 번호 레벨 경험치 현재HP 현재MP
 //   (버전 2: 골드 퀘스트(0/1))
+//	 버전 3 : 퀘스트 표 도입 (진행 퀘스트, 처치 수, 완료 기록)
 //   인벤토리 아이템 ID x INVEN_SIZE
 //   장비 아이템 ID x EQUIPSLOT_END
 //
@@ -19,7 +20,7 @@
 
 
 namespace {
-	const int SAVE_VERSION = 3;   // 3: 퀘스트 표 도입 (진행 퀘스트, 처치 수, 완료 기록)
+	const int SAVE_VERSION = 4;   // 4: 사운드, 스킬 시스템 도입 
 	const char* SAVE_PATH = "Playerdata.txt";
 
 	// Player::Init()이 처리하는 직업 번호 범위 (직업을 추가하면 같이 수정)
@@ -41,7 +42,7 @@ bool SaveData(const Player& player) {
 
 	out << SAVE_VERSION << '\n';
 	out << player.name << '\n';
-	out << player.job << ' ' << player.level << ' ' << player.exp << ' ' << player.hp << '\n';
+	out << player.job << ' ' << player.level << ' ' << player.exp << ' ' << player.hp << ' ' << player.mp << '\n';
 	out << player.gold << ' ' << player.questId << ' ' << player.questKills << ' ' << player.lastQuestDone << '\n';
 
 	for (int i = 0; i < INVEN_SIZE; ++i) {
@@ -79,7 +80,7 @@ bool LoadData(Player& player) {
 		return false;
 	}
 
-	int job = 0, level = 1, exp = 0, hp = 0;
+	int job = 0, level = 1, exp = 0, hp = 0, mp = 0;
 	in >> job >> level >> exp >> hp;
 	if (!in || job < JOB_MIN || job > JOB_MAX || level < 1 || level > MAX_LEVEL || exp < 0) {
 		return false;
@@ -93,6 +94,7 @@ bool LoadData(Player& player) {
 	loaded.level = level;
 	loaded.exp = exp;
 	loaded.hp = hp;
+	loaded.mp = mp;
 	
 	// 경험치가 이미 다음 레벨 요구량 이상이면 "다음 LV까지"가 음수로 보이므로 직전 값으로 맞춘다.
 	if (loaded.exp >= loaded.GetNeedExp()) loaded.exp = loaded.GetNeedExp() - 1;
@@ -126,6 +128,9 @@ bool LoadData(Player& player) {
 
 	if (loaded.hp > loaded.GetMaxHp()) loaded.hp = loaded.GetMaxHp(); // 밸런스 변경으로 최대HP가 줄었을 때
 	if (loaded.hp < 1) loaded.hp = 1;
+
+	if (loaded.mp > loaded.GetMaxMp()) loaded.mp = loaded.GetMaxMp(); // 밸런스 변경으로 최대MP가 줄었을 때
+	if (loaded.mp < 0) loaded.mp = 0;
 
 	player = loaded;
 	return true;

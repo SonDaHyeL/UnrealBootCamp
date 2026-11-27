@@ -8,6 +8,7 @@ class Character {
 protected:
 	std::string name = "";
 	int hp = 0;
+	double guard = 1.0;
 
 public:
 	virtual ~Character() = default; //상속용 클래스의 소멸자
@@ -16,7 +17,9 @@ public:
 	const std::string& GetName() const { return name; }
 	int GetHp() const { return hp; }
 	bool IsDead() const { return hp <= 0; }
-
+	double GetGuard() const { return guard; }
+	void SetGuard(double mul) { guard = mul; }
+	void ResetGuard() { guard = 1.0; }
 
 	//자식 클래스에서 구현해야 할 것
 	virtual int GetAttack() const = 0;

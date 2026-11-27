@@ -139,8 +139,8 @@ namespace {
 		if (p.GetJobName().empty()) return { "(캐릭터 생성 전)" };
 		vector<string> v = {
 			p.GetName() + " [" + p.GetJobName() + "] Lv." + to_string(p.GetLevel()),
-			"HP " + HpBar(p.GetHp(), p.GetMaxHp()),
-			"   " + to_string(p.GetHp()) + " / " + to_string(p.GetMaxHp()),
+			"HP " + HpBar(p.GetHp(), p.GetMaxHp()) + " " + to_string(p.GetHp()) + "/" + to_string(p.GetMaxHp()),
+			"MP " + HpBar(p.GetMp(), p.GetMaxMp()) + " " + to_string(p.GetMp()) + "/" + to_string(p.GetMaxMp()),
 			"ATK " + to_string(p.GetAttack()) + "  DEF " + to_string(p.GetDefense()),
 		};
 		if (p.HasQuest()) {
