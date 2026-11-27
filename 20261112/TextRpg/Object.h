@@ -80,11 +80,9 @@ const char* const EQUIPSLOT_NAME[EQUIPSLOT_END]{
 
 
 
-
-
-
 //인벤토리 유틸리티
 int SelectInvenSlot(Player& player);
+std::string GetItemEffect(const ITEM& item);   // 효과만 (예: "ATK +3 DEF +2")
 std::string GetItemInfo(const ITEM& item); //아이템 효과 출력
 
 //인벤토리 추가 삭제
@@ -99,11 +97,5 @@ int SellItem(Player& player, int idx);
 bool UseItem(Player& player, int idx);
 void DropItemAt(Player& player, int idx);
 
-
-
-//장비 관리 (미구현)
-//int  FindEquipSlot(const Player& player, ITEMTYPE type);
-//bool EquipItem(Player& player, int idx);
-//bool UnequipItem(Player& player, int slot);
 
 #endif

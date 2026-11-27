@@ -71,39 +71,24 @@ void Game::Save() {
 void Game::InvenMenu() {
 	UI::Log("");
 	UI::Log(":: 인벤토리 관리 ::");
-	bool equipPage = false;
+	UI::ResetSlotSelect();          // 항상 인벤토리 페이지, 1번 칸에서 시작
 
 	while (true) {
-		UI::SetEquipPage(equipPage);
+		int slot = UI::SelectSlot(player, true, "사용할 아이템을 고르세요.");
+		if (slot == -1) break;
 
-		// 선택지: 1~count 각 칸 | count+1 페이지 넘기기 | count+2 닫기
-		int count = equipPage ? EQUIPSLOT_END : INVEN_SIZE;
-		vector<string> option;
-
-		for (int i = 0; i < count; ++i) {
-			const ITEM& item = equipPage ? player.GetEquip(i) : player.GetInven().Get(i);
-			string itemName = item.IsEmpty() ? "-" : item.GetName();
-			option.push_back(equipPage ? string(EQUIPSLOT_NAME[i]) + " : " + itemName : itemName);
-		}
-		option.push_back(equipPage ? "인벤토리 보기" : "장비창 보기");
-		option.push_back("닫기");
-
-		int input = UI::Menu(player, option);
-		if (input == count + 2) break;										  //닫기
-		if (input == count + 1) { equipPage = !equipPage; continue; } //페이지 넘기기
-
-		int idx = input - 1;
-		const ITEM& picked = equipPage ? player.GetEquip(idx) : player.GetInven().Get(idx);
+		bool equipPage = UI::IsEquipPage();
+		const ITEM& picked = equipPage ? player.GetEquip(slot) : player.GetInven().Get(slot);
 
 		if (picked.IsEmpty()) {
 			UI::Log(">> 빈 칸입니다.");
 			continue;
 		}
-
-		if (equipPage) EquipMenu(idx);
-		else ItemMenu(idx);
+		if (equipPage) EquipMenu(slot);
+		else			ItemMenu(slot);
 	}
-	UI::SetEquipPage(false);
+
+	UI::ResetSlotSelect();
 }
 
 
@@ -132,11 +117,11 @@ void Game::ItemMenu(int idx) {
 	labels.push_back("그만둔다");
 	actions.push_back(Action::CANCLE);
 
-	switch (actions[UI::Menu(player, labels) - 1]) {
+	switch (actions[UI::MenuBack(player, labels) - 1]) {
 	case Action::USE:		UseItem(player, idx);		break;
 	case Action::EQUIP:		player.Equip(idx);			break;
 	case Action::DROP:
-		if (UI::Menu(player, { "정말 버린다", "그만둔다" }) == 1)
+		if (UI::MenuBack(player, { "정말 버린다", "그만둔다" }) == 1)
 		DropItemAt(player, idx);
 		break;
 	case Action::CANCLE:	break;
@@ -146,7 +131,7 @@ void Game::ItemMenu(int idx) {
 void Game::EquipMenu(int slot) {
 	ITEM item = player.GetEquip(slot);
 	UI::Log("[" + string(EQUIPSLOT_NAME[slot]) + "] " + item.GetName() + "  " + GetItemInfo(item));
-	if (UI::Menu(player, { "해제한다", "그만둔다" }) == 1) 
+	if (UI::MenuBack(player, { "해제한다", "그만둔다" }) == 1) 
 	{	player.Unequip(slot);	}
 }
 
@@ -269,7 +254,7 @@ Game::Scene Game::Store() {
 	UI::Log("'어서 오세요! 모험가님! 필요한 물건이라도 있으신가요?'");
 
 	while (true) {
-		switch (UI::Menu(player, { "인벤토리 관리", "아이템을 구매한다", "아이템을 판매한다", "상점을 나간다" })) {
+		switch (UI::MenuBack(player, { "인벤토리 관리", "아이템을 구매한다", "아이템을 판매한다", "상점을 나간다" })) {
 		case 1: InvenMenu(); break;
 		case 2: BuyMenu(); break;
 		case 3: SellMenu(); break;
@@ -284,23 +269,37 @@ void Game::BuyMenu() {
 	UI::Log("");
 	UI::Log("'늘 좋은 물건만 들여오고 있답니다!'");
 	UI::Log("");
-	for (ITEMLIST id : goods)
-		UI::Log(" - " + GetItemData(id).name + " : " + GetItemData(id).description);
-	UI::Log("");
-	// 선택지: 상품들, 마지막 번호는 나가기
-	vector<string> options;
-	for (ITEMLIST id : goods)
-		options.push_back(GetItemData(id).name + " (" + to_string(GetItemData(id).buyPrice) + "G)");
-	options.push_back("아무것도 사지 않는다");
 
+	// 상품 목록 만들기: 이름 / 가격 / 커서가 올라갔을 때 보일 정보
+	vector<UI::ListEntry> entries;
+	for (ITEMLIST id : goods) {
+		ITEM item;
+		item.ItemID = id;
+
+		UI::ListEntry e;
+		e.label = item.GetName();
+		e.tag = to_string(item.GetBuyPrice()) + "G";
+		e.info.push_back("[" + e.label + "] " + GetItemEffect(item));
+		e.info.push_back(item.GetDescription());
+
+		// 장비면 지금 그 칸에 낀 장비를 보여준다 (무기~발: ITEMTYPE 번호 = 장비 칸 번호)
+		if (item.IsEquipment() && item.GetEquipType() != EQUIP_ACCESSORY) {
+			const ITEM& now = player.GetEquip(item.GetEquipType());
+			e.info.push_back("현재 장착 : " + (now.IsEmpty() ? string("없음")
+				: string(now.GetName()) + " (" + GetItemEffect(now) + ")"));
+		}
+		entries.push_back(e);
+	}
+
+	int cursor = 0;
 	while (true) {
-		int input = UI::Menu(player, options);
-		if (input == (int)options.size()) {
+		int pick = UI::SelectList(player, "상 점", entries, "살 물건을 고르세요. (뒤로가기: 그만 사기)", cursor);
+		if (pick == -1) {
 			UI::Log("'에이, 조금만 더 보고 가시지!'");
 			return;
 		}
 
-		switch (BuyItem(player, goods[input - 1])) {
+		switch (BuyItem(player, goods[pick])) {
 		case 1:  UI::Log("'좋은 선택이에요! 다음에도 꼭 들러주세요!'"); break;
 		case 0:  UI::Log("'어라? 가방이 이미 꽉 찬 것 같은데요?'"); break;
 		case -1: UI::Log("'어라? 돈이 부족하신 것 같은데요?'"); break;
@@ -311,25 +310,15 @@ void Game::BuyMenu() {
 void Game::SellMenu() {
 	UI::Log("");
 	UI::Log("'오늘은 어떤 재밌는 걸 가져오셨나요?'");
+	UI::ResetSlotSelect();
 
 	while (true) {
-		// 팔 때마다 인벤토리가 바뀌니까 선택지를 매번 새로 만든다
-		// 1~8번 = 인벤토리 칸 번호 그대로, 마지막 번호는 나가기
-		vector<string> options;
-		for (int i = 0; i < INVEN_SIZE; ++i) {
-			const ITEM& item = player.GetInven().Get(i);
-			options.push_back(item.IsEmpty() ? "-"
-				: string(item.GetName()) + " (" + to_string(item.GetSellPrice()) + "G)");
-		}
-		options.push_back("아무것도 팔지 않는다");
-
-		int input = UI::Menu(player, options);
-		if (input == (int)options.size()) {
-			UI::Log("'에이, 좋게 잘 봐드릴 수 있는데요!'");
-			return;
-		}
-		SellItem(player, input);   // 1~8번 = 슬롯 번호 (SellItem 안에서 -1 함)
+		int slot = UI::SelectSlot(player, false, "팔 아이템을 고르시오. (뒤로가기 : 그만 팔기)");
+		if (slot == -1) break;
+		SellItem(player, slot + 1);
 	}
+	UI::ResetSlotSelect();
+	UI::Log("'에이, 좋게 잘 봐드릴 수 있는데요!'");
 }
 
 

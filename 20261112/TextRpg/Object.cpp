@@ -6,23 +6,18 @@ using namespace std;
 
 // ::인벤토리:: 기본 조작
 int SelectInvenSlot(Player& player) {
-	UI::Log(">> 인벤토리 슬롯을 선택하세요.");
-	// 1~8번 = 인벤토리 칸 번호 그대로, 마지막 번호는 취소
-	vector<string> options;
-	for (int i = 0; i < INVEN_SIZE; ++i) {
-		const ITEM& item = player.GetInven().Get(i);
-		options.push_back(item.IsEmpty() ? "-" : item.GetName());
-	}
-	options.push_back("취소");
-
+	UI::ResetSlotSelect();
 	while (true) {
-		int input = UI::Menu(player, options);
-		if (input == (int)options.size()) {
+		int slot = UI::SelectSlot(player, false, "아이템을 고르세요. (뒤로가기: 취소)");
+		if (slot ==-1) {
+			UI::ResetSlotSelect();
 			UI::Log(" >> 아무것도 선택되지 않았습니다.");
 			return -1;                           // -1은 이제 "취소"일 때만
 		}
-		int idx = input - 1;
-		if (!player.GetInven().IsEmptyAt(idx)) return idx;
+		if (!player.GetInven().IsEmptyAt(slot)) {
+			UI::ResetSlotSelect();
+			return slot;
+		}
 		UI::Log(" >> 빈 칸입니다. 다시 선택해주세요.");
 	}
 }
@@ -116,15 +111,19 @@ int SellItem(Player& player, int idx) {
 	return 1;
 }
 
-
-//아이템 정보 출력
-string GetItemInfo(const ITEM& item) {
+//아이템 효과/정보 출력
+string GetItemEffect(const ITEM& item) {
 	string info;
-	if (item.GetAtk() > 0) info += "ATK +" + to_string(item.GetAtk()) + " ";
-	if (item.GetDef() > 0) info += "DEF +" + to_string(item.GetDef()) + " ";
+	if (item.GetAtk() > 0)    info += "ATK +" + to_string(item.GetAtk()) + " ";
+	if (item.GetDef() > 0)    info += "DEF +" + to_string(item.GetDef()) + " ";
 	if (item.GetPlusHp() > 0) info += "MAX HP +" + to_string(item.GetPlusHp()) + " ";
-	if (item.GetHeal() > 0) info += "HP 회복 +" + to_string(item.GetHeal()) + " ";
-	if (info.empty()) info += "특별한 효과 없음 ";
-	
-	return info + "(판매가 : " + to_string(item.GetSellPrice()) + "G)";
+	if (item.GetHeal() > 0)   info += "HP 회복 +" + to_string(item.GetHeal()) + " ";
+	if (info.empty())         info = "특별한 효과 없음 ";
+	return info;
+}
+
+
+//아이템 판매가
+string GetItemInfo(const ITEM& item) {
+	return GetItemEffect(item) + "(판매가 : " + to_string(item.GetSellPrice()) + "G)";
 }
