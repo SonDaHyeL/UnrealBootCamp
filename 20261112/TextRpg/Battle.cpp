@@ -65,7 +65,10 @@ namespace {
 	// power / pierce / forceCrit: 스킬용 (데미지 배율 / 방어 무시 / 확정 치명타)
 	bool Attack(const Character& attacker, Character& target,
 		double power = 1.0, bool pierce = false, bool forceCrit = false) {
-		int defense = pierce ? 0 : (int)(target.GetDefense() * target.GetGuard());
+		// 방어무시(pierce)는 방어력의 절반만 계산한다.
+		// (완전히 무시하면 방어력이 높은 후반에 일반 공격의 3~6배가 되어 밸런스가 무너짐)
+		int defense = (int)(target.GetDefense() * target.GetGuard());
+		if (pierce) defense /= 2;
 		DamageResult r = CalcDamage(attacker.GetAttack(), defense, power, forceCrit);
 		if (r.miss) {
 			UI::Log(attacker.GetName() + "의 공격! " + target.GetName() + "이/가 공격을 피했습니다!");
@@ -82,7 +85,7 @@ namespace {
 		string hits = (s.hits > 1) ? " x " + to_string(s.hits) + "회" : "";
 		switch (s.effect) {
 		case SkillEffect::ATTACK:   return "데미지 " + to_string(s.power) + "%" + hits;
-		case SkillEffect::PIERCE:   return "방어 무시, 데미지 " + to_string(s.power) + "%" + hits;
+		case SkillEffect::PIERCE:   return "방어 절반 무시, 데미지 " + to_string(s.power) + "%" + hits;
 		case SkillEffect::CRITICAL: return "확정 치명타, 데미지 " + to_string(s.power) + "%" + hits;
 		case SkillEffect::GUARD:    return "이번 턴 방어력 " + to_string(s.power) + "%";
 		case SkillEffect::HEAL:     return "최대 HP의 " + to_string(s.power) + "% 회복";
@@ -215,17 +218,24 @@ namespace {
 				return false;
 			case 4: if (UseItemInBattle(player)) return false; break;      // 취소면 다시 고르기
 			case 5:
+				if (enemy.IsBoss()) {                          // 보스전은 도망 불가: 다시 고르기
+					UI::Log(">> " + enemy.GetName() + "의 기세에 눌려 도망칠 수 없습니다!");
+					break;
+				}
 				UI::Log("> 당신은 도망쳤습니다... 이런...");
 				return true;
 			}
 		}
 	}
 
-	// 몬스터 행동: 스킬확률에 당첨되면 스킬, 아니면 일반 공격
+	// 몬스터 행동: 스킬1 → 스킬2 순서로 확률을 굴려서 먼저 당첨된 스킬을 쓴다. 둘 다 안 되면 일반 공격
 	void EnemyAct(Enemy& enemy, Player& player) {
-		const SkillData& s = GetSkillData(enemy.GetSkill());
-		if (s.exists && RandomRange(0.0, 100.0) < enemy.GetSkillChance())
-			ApplySkill(enemy, player, s);
+		const SkillData& s1 = GetSkillData(enemy.GetSkill());
+		const SkillData& s2 = GetSkillData(enemy.GetSkill2());
+		if (s1.exists && RandomRange(0.0, 100.0) < enemy.GetSkillChance())
+			ApplySkill(enemy, player, s1);
+		else if (s2.exists && RandomRange(0.0, 100.0) < enemy.GetSkill2Chance())
+			ApplySkill(enemy, player, s2);
 		else
 			Attack(enemy, player);
 	}
@@ -236,6 +246,10 @@ void Fight(Player& player, Enemy& enemy) {
 	Sound::PlayBgm("Battle.mp3");
 	UI::SetTitle("전 투");
 	UI::ClearLog();
+	if (enemy.IsBoss()) {
+		UI::Log("!!!!! 보스 출현 !!!!!");
+		UI::Log("땅이 울리고, 뜨거운 바람이 불어옵니다... (보스전에서는 도망칠 수 없습니다)");
+	}
 	UI::Log(enemy.GetName() + "이/가 나타났습니다!");
 	if (!enemy.GetDescription().empty()) UI::Log(enemy.GetDescription());
 

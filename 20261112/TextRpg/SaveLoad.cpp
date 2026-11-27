@@ -81,7 +81,7 @@ bool LoadData(Player& player) {
 	}
 
 	int job = 0, level = 1, exp = 0, hp = 0, mp = 0;
-	in >> job >> level >> exp >> hp;
+	in >> job >> level >> exp >> hp >> mp;
 	if (!in || job < JOB_MIN || job > JOB_MAX || level < 1 || level > MAX_LEVEL || exp < 0) {
 		return false;
 	}

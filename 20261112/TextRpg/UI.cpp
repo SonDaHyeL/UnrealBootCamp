@@ -126,7 +126,7 @@ namespace {
 
 	vector<string> EnemyPanel(const Enemy& e) {
 		return {
-					e.GetName(),
+					(e.IsBoss() ? "[보스] " : "") + e.GetName() + " Lv." + to_string(e.GetLevel()),
 					"",
 					"HP " + HpBar(e.GetHp(), e.GetMaxHp()),
 					"   " + to_string(e.GetHp()) + " / " + to_string(e.GetMaxHp()),

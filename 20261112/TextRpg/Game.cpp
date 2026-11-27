@@ -335,11 +335,17 @@ Game::Scene Game::Hunting() {
 	UI::ClearLog();
 	UI::Log("사나운 몬스터 주의! 팻말이 붙어있습니다.");
 
-	// 선택지: 1 인벤토리 | 2~ 몬스터들 (표에서 자동) | 마을 | 종료
-	vector<int> monsters = GetEnemyIds();
+	// 선택지: 1 인벤토리 | 2~ 지역들 (monsters.csv에서 자동) | 마을 | 종료
+	vector<string> areas = GetAreas();
 	vector<string> options = { "인벤토리 관리" };
-
-	for (int id : monsters)	options.push_back(GetEnemyData(id).name + "을/를 사냥한다");
+	for (const string& area : areas) {
+		vector<int> ids = GetEnemyIdsIn(area);             // 레벨 낮은 순이라 앞뒤가 최소·최대 레벨
+		int minLv = GetEnemyData(ids.front()).level;
+		int maxLv = GetEnemyData(ids.back()).level;
+		string range = (minLv == maxLv) ? "Lv." + to_string(minLv)
+		                                : "Lv." + to_string(minLv) + "~" + to_string(maxLv);
+		options.push_back(area + " (" + range + ")");
+	}
 	options.push_back("마을로 돌아간다");
 	options.push_back("모험을 종료한다");
 
@@ -347,14 +353,51 @@ Game::Scene Game::Hunting() {
 	const int QUIT_NO = (int)options.size();
 
 	while (true) {
+		UI::SetTitle("사 냥 터");
 		int input = UI::Menu(player, options);
 		if (input == 1) { InvenMenu(); continue; }
 		if (input == TOWN_NO) return Scene::TOWN;
 		if (input == QUIT_NO) return Scene::QUIT;
 
-		Enemy enemy(monsters[input - 2]);   // 2번부터 몬스터
+		if (!HuntArea(areas[input - 2])) return Scene::QUIT;   // 2번부터 지역. 쓰러지면 메인 메뉴로
+		Sound::PlayBgm("GentleFields.mp3");
+		UI::ClearLog();
+		UI::Log("사냥터 입구로 돌아왔습니다.");
+	}
+}
+
+// 지역 하나에서 사냥. 쓰러지면(게임 오버) false
+bool Game::HuntArea(const string& area) {
+	UI::SetTitle(area);
+	UI::ClearLog();
+	UI::Log(":: " + area + " ::");
+
+	// 선택지: 1 인벤토리 | 2~ 몬스터들 (레벨 낮은 순) | 돌아가기
+	vector<int> monsters = GetEnemyIdsIn(area);
+	vector<string> options = { "인벤토리 관리" };
+	for (int id : monsters) {
+		const EnemyData& e = GetEnemyData(id);
+		options.push_back((e.boss ? "[보스] " : "") + e.name + " (Lv." + to_string(e.level) + ")");
+	}
+	options.push_back("사냥터 입구로 돌아간다");
+	const int BACK_NO = (int)options.size();
+
+	while (true) {
+		int input = UI::MenuBack(player, options);
+		if (input == 1) { InvenMenu(); continue; }
+		if (input == BACK_NO) return true;
+
+		int id = monsters[input - 2];
+		if (GetEnemyData(id).boss) {                         // 보스는 한 번 더 확인
+			UI::Log("");
+			UI::Log("엄청난 기운이 느껴집니다... 정말 도전하시겠습니까? (도망칠 수 없습니다)");
+			if (UI::MenuBack(player, { "도전한다", "그만둔다" }) != 1) continue;
+		}
+
+		Enemy enemy(id);
 		Fight(player, enemy);
-		UI::SetTitle("사 냥 터");
+		UI::SetTitle(area);
+		Sound::PlayBgm("GentleFields.mp3");
 
 		if (player.IsDead()) {
 			UI::Log("");
@@ -362,7 +405,7 @@ Game::Scene Game::Hunting() {
 			UI::Log("> 이런...(겨우 체력을 회복하고 다시 일어나기.)");
 			UI::Menu(player, { "메인 메뉴로 돌아간다" });
 			player.Revive();
-			return Scene::QUIT;
+			return false;
 		}
 	}
 }

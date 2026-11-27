@@ -33,6 +33,7 @@ private:
 	void InvenMenu();
 	void ItemMenu(int idx);
 	void EquipMenu(int slot);
+	bool HuntArea(const std::string& area);   // 지역 하나에서 사냥. 쓰러지면 false
 
 	//게임이 플레이어를 소유함
 	Player player;

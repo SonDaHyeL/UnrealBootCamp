@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
+#include <algorithm>     // find, stable_sort
 using namespace std;
 
 namespace {
@@ -175,7 +176,8 @@ namespace {
 			}
 			if (!ReadInts(row, 3, { "구매가", "판매가", "공격", "방어", "추가HP", "회복량", "MP회복"},
 				{ &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal, &d.mpheal }, error)) return false;
-			d.inShop = (row.f[11] == "Y" || row.f[10] == "y");
+			if (!ToStatus(row.f[10], d.cure)) { error = row.where + "상태회복은 -, 독 중 하나여야 합니다."; return false; }
+			d.inShop = (row.f[11] == "Y" || row.f[11] == "y");
 			d.description = row.f[12];
 
 			if (!PutRow(itemTable, row, d, error)) return false;
@@ -187,17 +189,28 @@ namespace {
 
 	bool LoadEnemies(const string& path, string& error) {
 		vector<CsvRow> rows;
-		if (!ReadCsv(path, 13, rows, error)) return false;
+		// ID,이름,지역,레벨,공격,방어,HP,경험치,골드,드롭아이템ID,희귀드롭ID,희귀확률,스킬ID,스킬확률,스킬2ID,스킬2확률,보스,설명
+		if (!ReadCsv(path, 18, rows, error)) return false;
 
 		enemyTable.assign(1, EnemyData());
 		for (const CsvRow& row : rows) {
 			EnemyData d;
 			d.exists = true;
 			d.name = row.f[1];
-			if (!ReadInts(row, 2, { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률", "스킬ID", "스킬확률" },
-				{ &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance, &d.skill, &d.skillChance }, error)) return false;
-			d.description = row.f[12];
+			d.area = row.f[2];
+			if (d.area.empty()) { error = row.where + "지역이 비어 있습니다."; return false; }
+			if (!ReadInts(row, 3, { "레벨", "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률",
+			                        "스킬ID", "스킬확률", "스킬2ID", "스킬2확률" },
+				{ &d.level, &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance,
+				  &d.skill, &d.skillChance, &d.skill2, &d.skill2Chance }, error)) return false;
+			d.boss = (row.f[16] == "Y" || row.f[16] == "y");
+			d.description = row.f[17];
 
+			if (d.level < 1) { error = row.where + "레벨은 1 이상이어야 합니다."; return false; }
+			if (d.skill2Chance < 0 || d.skill2Chance > 100) { error = row.where + "스킬2확률은 0~100이어야 합니다."; return false; }
+			if (d.skill2Chance > 0 && !Find(skillTable, d.skill2).exists) {
+				error = row.where + "스킬2ID " + to_string(d.skill2) + "번은 skills.csv에 없습니다."; return false;
+			}
 			if (d.maxHp < 1) { error = row.where + "HP는 1 이상이어야 합니다."; return false; }
 			if (d.rareChance < 0 || d.rareChance > 100) { error = row.where + "희귀확률은 0~100이어야 합니다."; return false; }
 			if (d.rareChance > 0 && d.rareItem == noItem) { error = row.where + "희귀확률이 있으면 희귀드롭ID가 필요합니다."; return false; }
@@ -304,6 +317,28 @@ vector<int> GetEnemyIds() {
 	vector<int> list;
 	for (int id = 1; id < (int)enemyTable.size(); ++id)
 		if (enemyTable[id].exists) list.push_back(id);
+	return list;
+}
+
+vector<string> GetAreas() {
+	vector<string> areas;
+	for (int id = 1; id < (int)enemyTable.size(); ++id) {
+		const EnemyData& e = enemyTable[id];
+		if (e.exists && find(areas.begin(), areas.end(), e.area) == areas.end())
+			areas.push_back(e.area);                       // 처음 나온 지역만 추가
+	}
+	return areas;
+}
+
+vector<int> GetEnemyIdsIn(const string& area) {
+	vector<int> list;
+	for (int id = 1; id < (int)enemyTable.size(); ++id)
+		if (enemyTable[id].exists && enemyTable[id].area == area) list.push_back(id);
+
+	// 레벨 낮은 순으로 정렬 (같은 레벨이면 ID 순서 유지)
+	stable_sort(list.begin(), list.end(), [](int a, int b) {
+		return enemyTable[a].level < enemyTable[b].level;
+	});
 	return list;
 }
 
