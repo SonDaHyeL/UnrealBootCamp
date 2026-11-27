@@ -268,11 +268,11 @@ namespace {
 			case 75: key = Key::LEFT;  break;
 			case 77: key = Key::RIGHT; break;
 			}
-			if (key != Key::NONE) Sound::PlaySfx("Sfx Title Interface.mp3");   // 방향키 소리
+			if (key != Key::NONE) Sound::PlaySfx("Sfx Title Interface.mp3", 300);   // 방향키 소리
 			return key;
 		}
 		if (ch == '\r') {                    // Enter
-			Sound::PlaySfx("Sfx Select.mp3");
+			Sound::PlaySfx("Sfx Select.mp3", 300);
 			return Key::ENTER;
 		}
 		if (ch == '\b') return Key::BACK;    // Backspace

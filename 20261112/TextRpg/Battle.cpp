@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include "UI.h"
+#include "Sound.h"
 #include "Battle.h"
 #include "Quest.h"
 
@@ -73,6 +74,7 @@ namespace {
 
 
 void Fight(Player& player, Enemy& enemy) {
+	Sound::PlayBgm("Battle.mp3");
 	UI::SetTitle("전 투");
 	UI::ClearLog();
 	UI::Log(enemy.GetName() + "이/가 나타났습니다!");

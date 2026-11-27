@@ -18,6 +18,7 @@ void Game::Run() {
 	UI::Init();
 	LoadOrCreate();
 	MainMenu();
+	Sound::Shutdown();
 }
 
 void Game::LoadOrCreate() {
@@ -329,7 +330,7 @@ void Game::SellMenu() {
 
 
 Game::Scene Game::Hunting() {
-	Sound::PlayBgm("Battle.mp3");
+	Sound::PlayBgm("GentleFields.mp3");
 	UI::SetTitle("사 냥 터");
 	UI::ClearLog();
 	UI::Log("사나운 몬스터 주의! 팻말이 붙어있습니다.");
@@ -354,7 +355,6 @@ Game::Scene Game::Hunting() {
 		Enemy enemy(monsters[input - 2]);   // 2번부터 몬스터
 		Fight(player, enemy);
 		UI::SetTitle("사 냥 터");
-		Sound::PlayBgm("Battle.mp3");
 
 		if (player.IsDead()) {
 			UI::Log("");
