@@ -4,6 +4,7 @@
 #include "SaveLoad.h"
 #include "DataTable.h"
 #include "Quest.h"
+#include "UI.h"
 
 using namespace std;
 
@@ -20,6 +21,7 @@ void Game::Run() {
 }
 
 void Game::LoadOrCreate() {
+	Sound::PlayBgm("title.mp3");
 	UI::SetTitle("Text_Rpg");
 	UI::ClearLog();
 	UI::Log(":: Text_Rpg에 어서오세요! ::");
@@ -41,6 +43,7 @@ void Game::LoadOrCreate() {
 
 
 void Game::MainMenu() {
+	Sound::PlayBgm("title.mp3");
 	UI::SetTitle("MAIN MENU");               // 로그는 비우지 않음 → 환영/생성 메시지가 남아 보임
 
 	while (true) {
@@ -137,6 +140,7 @@ void Game::EquipMenu(int slot) {
 
 
 void Game::Adventure() {
+	Sound::PlayBgm("title.mp3");
 	Scene current = Scene::START;
 
 	while (current != Scene::QUIT) {
@@ -151,6 +155,7 @@ void Game::Adventure() {
 }
 
 Game::Scene Game::Start() {
+	Sound::PlayBgm("Best Adventure Ever.mp3");
 	UI::SetTitle("여행의 시작");
 	UI::ClearLog();
 	UI::Log(":: 여행을 시작합니다! ::");
@@ -167,7 +172,7 @@ Game::Scene Game::Start() {
 }
 
 Game::Scene Game::Town() {
-	
+	Sound::PlayBgm("Best Adventure Ever.mp3");
 	UI::SetTitle("마 을");
 	UI::ClearLog();
 	UI::Log("한적하고 평화로운 곳입니다.");
@@ -246,6 +251,7 @@ void Game::TalkToChief() {
 }
 
 Game::Scene Game::Store() {
+	Sound::PlayBgm("A Night Alone.mp3");
 	UI::SetTitle("상 점");
 	UI::ClearLog();
 	UI::Log("오래된 목재로 지어진 작은 상점입니다.");
@@ -315,7 +321,7 @@ void Game::SellMenu() {
 	while (true) {
 		int slot = UI::SelectSlot(player, false, "팔 아이템을 고르시오. (뒤로가기 : 그만 팔기)");
 		if (slot == -1) break;
-		SellItem(player, slot + 1);
+		SellItem(player, slot);
 	}
 	UI::ResetSlotSelect();
 	UI::Log("'에이, 좋게 잘 봐드릴 수 있는데요!'");
@@ -323,6 +329,7 @@ void Game::SellMenu() {
 
 
 Game::Scene Game::Hunting() {
+	Sound::PlayBgm("Battle.mp3");
 	UI::SetTitle("사 냥 터");
 	UI::ClearLog();
 	UI::Log("사나운 몬스터 주의! 팻말이 붙어있습니다.");
@@ -347,6 +354,7 @@ Game::Scene Game::Hunting() {
 		Enemy enemy(monsters[input - 2]);   // 2번부터 몬스터
 		Fight(player, enemy);
 		UI::SetTitle("사 냥 터");
+		Sound::PlayBgm("Battle.mp3");
 
 		if (player.IsDead()) {
 			UI::Log("");

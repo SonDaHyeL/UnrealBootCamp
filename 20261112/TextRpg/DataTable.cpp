@@ -8,9 +8,11 @@
 using namespace std;
 
 namespace {
-	vector<ItemData> itemTable;   // 칸 번호 = 아이템 ID (0번은 빈 칸)
-	vector<EnemyData> enemyTable;   // 칸 번호 = enemy ID (0번은 빈 칸)
-	vector<QuestData> questTable;
+	vector<ItemData> itemTable;     // 칸 번호 = 아이템 ID (0번은 빈 칸)
+	vector<EnemyData> enemyTable;   // 칸 번호 = 몬스터 ID (0번은 안 씀)
+	vector<QuestData> questTable;   // 칸 번호 = 퀘스트 ID (0번은 안 씀)
+
+	// ===================== 글자 다루기 =====================
 
 	// 앞뒤 공백 제거
 	string Trim(const string& s) {
@@ -27,12 +29,12 @@ namespace {
 		for (size_t i = 0; i < line.size(); ++i) {
 			char c = line[i];
 			if (inQuotes) {
-				if (c == '"' && i + 1 < line.size() && line[i + 1] == '"') { cur += '"'; ++i; }  // "" → "
-				else if (c == '"') inQuotes = false;                                           // 닫는 따옴표
+				if (c == '"' && i + 1 < line.size() && line[i + 1] == '"') { cur += '"'; ++i; }
+				else if (c == '"') inQuotes = false;
 				else cur += c;
 			}
-			else if (c == '"') inQuotes = true;                                                // 여는 따옴표
-			else if (c == ',') { fields.push_back(Trim(cur)); cur.clear(); }                   // 칸 끝
+			else if (c == '"') inQuotes = true;
+			else if (c == ',') { fields.push_back(Trim(cur)); cur.clear(); }
 			else cur += c;
 		}
 		fields.push_back(Trim(cur));
@@ -53,113 +55,130 @@ namespace {
 	bool ToType(const string& s, ITEMTYPE& out) {
 		if (s.empty() || s == "-") { out = NONE_EQUIP;      return true; }
 		if (s == "장신구") { out = EQUIP_ACCESSORY; return true; }
-		for (int i = SLOT_WEAPON; i <= SLOT_FOOT; ++i) {     // 무기~발은 EQUIPSLOT_NAME과 같은 이름
+		for (int i = SLOT_WEAPON; i <= SLOT_FOOT; ++i) {
 			if (s == EQUIPSLOT_NAME[i]) { out = (ITEMTYPE)i; return true; }
 		}
 		return false;
 	}
 
-	bool LoadItems(const string& path, string& error) {
+	// ===================== CSV 공통 처리 =====================
+
+	// CSV 한 줄 (제목 줄과 빈 줄은 이미 걸러진 상태)
+	struct CsvRow {
+		int id = 0;                 // 첫 칸 (1 이상 보장)
+		vector<string> f;           // 모든 칸
+		string where;               // 오류 메시지 앞부분 (예: "items.csv 3번째 줄: ")
+	};
+
+	// 파일을 읽어 줄 목록을 만든다. 모든 표가 "ID, 이름, ..."으로 시작하므로 그 두 칸까지 여기서 검사.
+	bool ReadCsv(const string& path, int fieldCount, vector<CsvRow>& rows, string& error) {
 		ifstream in(path);
 		if (!in) { error = path + " 파일을 열 수 없습니다."; return false; }
 
-		const int FIELD_COUNT = 11;
-		itemTable.assign(1, ItemData());           // 0번 = 빈 칸
-
 		string line;
 		int lineNo = 1;
-		getline(in, line);                         // 첫 줄은 제목 줄 → 건너뜀
+		getline(in, line);                                  // 첫 줄은 제목 줄
 		while (getline(in, line)) {
 			++lineNo;
 			if (!line.empty() && line.back() == '\r') line.pop_back();
-			vector<string> f = SplitCsv(line);
-			if (f[0].empty()) continue;            // 빈 줄 (엑셀이 남기는 ",,,,,," 포함)
 
-			string where = path + " " + to_string(lineNo) + "번째 줄: ";
-			if ((int)f.size() < FIELD_COUNT) { error = where + "칸 수가 부족합니다."; return false; }
+			CsvRow row;
+			row.f = SplitCsv(line);
+			if (row.f[0].empty()) continue;                 // 빈 줄 (엑셀이 남기는 ",,,,," 포함)
 
-			int id = 0;
-			if (!ToInt(f[0], id) || id <= 0) { error = where + "ID는 1 이상의 숫자여야 합니다."; return false; }
+			row.where = path + " " + to_string(lineNo) + "번째 줄: ";
+			if ((int)row.f.size() < fieldCount) { error = row.where + "칸 수가 부족합니다."; return false; }
+			if (!ToInt(row.f[0], row.id) || row.id <= 0) { error = row.where + "ID는 1 이상의 숫자여야 합니다."; return false; }
+			if (row.f[1].empty()) { error = row.where + "이름이 비어 있습니다."; return false; }
 
+			rows.push_back(row);
+		}
+		return true;
+	}
+
+	// first번째 칸부터 숫자 칸들을 차례로 읽는다. names[i] 칸의 값 → *targets[i]
+	bool ReadInts(const CsvRow& row, int first, const vector<const char*>& names,
+		const vector<int*>& targets, string& error) {
+		for (size_t c = 0; c < targets.size(); ++c) {
+			if (!ToInt(row.f[first + c], *targets[c])) {
+				error = row.where + names[c] + " 칸이 숫자가 아닙니다.";
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 아이템 ID 칸 검사: 0(없음)이거나 items.csv에 있는 ID여야 한다
+	bool CheckItemId(const CsvRow& row, const string& colName, ITEMLIST id, string& error) {
+		if (id == noItem || IsValidItem(id)) return true;
+		error = row.where + colName + " " + to_string(id) + "번은 items.csv에 없습니다.";
+		return false;
+	}
+
+	// 표(table)의 row.id 칸에 d를 넣는다. 표가 작으면 늘리고(중간 빈 ID는 exists = false), 이미 있으면 중복 오류.
+	// T는 ItemData, EnemyData, QuestData 중 하나 (셋 다 exists 멤버가 있어야 함)
+	template <typename T>
+	bool PutRow(vector<T>& table, const CsvRow& row, const T& d, string& error) {
+		if (row.id >= (int)table.size()) table.resize(row.id + 1);
+		if (table[row.id].exists) { error = row.where + "ID " + to_string(row.id) + "번이 중복되었습니다."; return false; }
+		table[row.id] = d;
+		return true;
+	}
+
+	// 표에서 id를 찾는다. 범위 밖이거나 없는 ID면 빈 값
+	template <typename T>
+	const T& Find(const vector<T>& table, int id) {
+		static const T EMPTY;
+		if (id <= 0 || id >= (int)table.size() || !table[id].exists) return EMPTY;
+		return table[id];
+	}
+
+	// ===================== 표마다 다른 부분 =====================
+
+	bool LoadItems(const string& path, string& error) {
+		vector<CsvRow> rows;
+		if (!ReadCsv(path, 11, rows, error)) return false;
+
+		itemTable.assign(1, ItemData());                    // 0번 = 빈 칸
+		for (const CsvRow& row : rows) {
 			ItemData d;
 			d.exists = true;
-			d.name = f[1];
-			if (d.name.empty()) { error = where + "이름이 비어 있습니다."; return false; }
-			if (!ToType(f[2], d.slot)) { error = where + "종류는 -, 무기, 머리, 몸, 다리, 발, 장신구 중 하나여야 합니다."; return false; }
-
-			// 숫자 칸 6개 (구매가~회복량)를 차례로 읽는다
-			const char* colName[] = { "구매가", "판매가", "공격", "방어", "추가HP", "회복량" };
-			int* target[] = { &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal };
-			for (int c = 0; c < 6; ++c) {
-				if (!ToInt(f[3 + c], *target[c])) {
-					error = where + colName[c] + " 칸이 숫자가 아닙니다.";
-					return false;
-				}
+			d.name = row.f[1];
+			if (!ToType(row.f[2], d.slot)) {
+				error = row.where + "종류는 -, 무기, 머리, 몸, 다리, 발, 장신구 중 하나여야 합니다."; return false;
 			}
-			d.inShop = (f[9] == "Y" || f[9] == "y");
-			d.description = f[10];
+			if (!ReadInts(row, 3, { "구매가", "판매가", "공격", "방어", "추가HP", "회복량" },
+				{ &d.buyPrice, &d.sellPrice, &d.atk, &d.def, &d.plushp, &d.heal }, error)) return false;
+			d.inShop = (row.f[9] == "Y" || row.f[9] == "y");
+			d.description = row.f[10];
 
-			if (id >= (int)itemTable.size()) itemTable.resize(id + 1);   // 중간 빈 ID는 exists=false
-			if (itemTable[id].exists) { error = where + "ID " + to_string(id) + "번이 중복되었습니다."; return false; }
-			itemTable[id] = d;
+			if (!PutRow(itemTable, row, d, error)) return false;
 		}
 
 		if (itemTable.size() <= 1) { error = path + "에 아이템이 하나도 없습니다."; return false; }
 		return true;
 	}
 
-
 	bool LoadEnemies(const string& path, string& error) {
-		ifstream in(path);
-		if (!in) { error = path + " 파일을 열 수 없습니다."; return false; }
+		vector<CsvRow> rows;
+		if (!ReadCsv(path, 11, rows, error)) return false;
 
-		const int FIELD_COUNT = 11;
 		enemyTable.assign(1, EnemyData());
-
-		string line;
-		int lineNo = 1;
-		getline(in, line);                         // 제목 줄 건너뜀
-		while (getline(in, line)) {
-			++lineNo;
-			if (!line.empty() && line.back() == '\r') line.pop_back();
-			vector<string> f = SplitCsv(line);
-			if (f[0].empty()) continue;
-
-			string where = path + " " + to_string(lineNo) + "번째 줄: ";
-			if ((int)f.size() < FIELD_COUNT) { error = where + "칸 수가 부족합니다."; return false; }
-
-			int id = 0;
-			if (!ToInt(f[0], id) || id <= 0) { error = where + "ID는 1 이상의 숫자여야 합니다."; return false; }
-
+		for (const CsvRow& row : rows) {
 			EnemyData d;
 			d.exists = true;
-			d.name = f[1];
-			if (d.name.empty()) { error = where + "이름이 비어 있습니다."; return false; }
+			d.name = row.f[1];
+			if (!ReadInts(row, 2, { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률" },
+				{ &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance }, error)) return false;
+			d.description = row.f[10];
 
-			// 숫자 칸 8개 (공격~희귀확률)
-			const char* colName[] = { "공격", "방어", "HP", "경험치", "골드", "드롭아이템ID", "희귀드롭ID", "희귀확률" };
-			int* target[] = { &d.attack, &d.defense, &d.maxHp, &d.exp, &d.gold, &d.dropItem, &d.rareItem, &d.rareChance };
-			for (int c = 0; c < 8; ++c) {
-				if (!ToInt(f[2 + c], *target[c])) {
-					error = where + colName[c] + " 칸이 숫자가 아닙니다.";
-					return false;
-				}
-			}
-			d.description = f[10];
+			if (d.maxHp < 1) { error = row.where + "HP는 1 이상이어야 합니다."; return false; }
+			if (d.rareChance < 0 || d.rareChance > 100) { error = row.where + "희귀확률은 0~100이어야 합니다."; return false; }
+			if (d.rareChance > 0 && d.rareItem == noItem) { error = row.where + "희귀확률이 있으면 희귀드롭ID가 필요합니다."; return false; }
+			if (!CheckItemId(row, "드롭아이템ID", d.dropItem, error)) return false;
+			if (!CheckItemId(row, "희귀드롭ID", d.rareItem, error)) return false;
 
-			// 값 검사 (아이템 ID는 items.csv에 실제로 있어야 함)
-			if (d.maxHp < 1) { error = where + "HP는 1 이상이어야 합니다."; return false; }
-			if (d.dropItem != noItem && !IsValidItem(d.dropItem)) {
-				error = where + "드롭아이템ID " + to_string(d.dropItem) + "번은 items.csv에 없습니다."; return false;
-			}
-			if (d.rareChance < 0 || d.rareChance > 100) { error = where + "희귀확률은 0~100이어야 합니다."; return false; }
-			if (d.rareChance > 0 && !IsValidItem(d.rareItem)) {
-				error = where + "희귀드롭ID " + to_string(d.rareItem) + "번은 items.csv에 없습니다."; return false;
-			}
-
-			if (id >= (int)enemyTable.size()) enemyTable.resize(id + 1);
-			if (enemyTable[id].exists) { error = where + "ID " + to_string(id) + "번이 중복되었습니다."; return false; }
-			enemyTable[id] = d;
+			if (!PutRow(enemyTable, row, d, error)) return false;
 		}
 
 		if (enemyTable.size() <= 1) { error = path + "에 몬스터가 하나도 없습니다."; return false; }
@@ -167,54 +186,26 @@ namespace {
 	}
 
 	bool LoadQuests(const string& path, string& error) {
-		ifstream in(path);
-		if (!in) { error = path + " 파일을 열 수 없습니다."; return false; }
+		vector<CsvRow> rows;
+		if (!ReadCsv(path, 9, rows, error)) return false;
 
-		const int FIELD_COUNT = 9;
 		questTable.assign(1, QuestData());
-
-		string line;
-		int lineNo = 1;
-		getline(in, line);
-		while (getline(in, line)) {
-			++lineNo;
-			if (!line.empty() && line.back() == '\r') line.pop_back();
-			vector<string> f = SplitCsv(line);
-			if (f[0].empty()) continue;
-
-			string where = path + " " + to_string(lineNo) + "번째 줄: ";
-			if ((int)f.size() < FIELD_COUNT) { error = where + "칸 수가 부족합니다."; return false; }
-
-			int id = 0;
-			if (!ToInt(f[0], id) || id <= 0) { error = where + "ID는 1 이상의 숫자여야 합니다."; return false; }
-
+		for (const CsvRow& row : rows) {
 			QuestData d;
 			d.exists = true;
-			d.name = f[1];
-			if (d.name.empty()) { error = where + "이름이 비어 있습니다."; return false; }
+			d.name = row.f[1];
+			if (!ReadInts(row, 2, { "대상몬스터ID", "목표수", "보상골드", "보상경험치", "보상아이템ID" },
+				{ &d.target, &d.count, &d.rewardGold, &d.rewardExp, &d.rewardItem }, error)) return false;
+			d.request = row.f[7];
+			d.complete = row.f[8];
 
-			const char* colName[] = { "대상몬스터ID", "목표수", "보상골드", "보상경험치", "보상아이템ID" };
-			int* target[] = { &d.target, &d.count, &d.rewardGold, &d.rewardExp, &d.rewardItem };
-			for (int c = 0; c < 5; ++c) {
-				if (!ToInt(f[2 + c], *target[c])) {
-					error = where + colName[c] + " 칸이 숫자가 아닙니다.";
-					return false;
-				}
+			if (!Find(enemyTable, d.target).exists) {
+				error = row.where + "대상몬스터ID " + to_string(d.target) + "번은 monsters.csv에 없습니다."; return false;
 			}
-			d.request = f[7];
-			d.complete = f[8];
+			if (d.count < 1) { error = row.where + "목표수는 1 이상이어야 합니다."; return false; }
+			if (!CheckItemId(row, "보상아이템ID", d.rewardItem, error)) return false;
 
-			if (!GetEnemyData(d.target).exists) {
-				error = where + "대상몬스터ID " + to_string(d.target) + "번은 monsters.csv에 없습니다."; return false;
-			}
-			if (d.count < 1) { error = where + "목표수는 1 이상이어야 합니다."; return false; }
-			if (d.rewardItem != noItem && !IsValidItem(d.rewardItem)) {
-				error = where + "보상아이템ID " + to_string(d.rewardItem) + "번은 items.csv에 없습니다."; return false;
-			}
-
-			if (id >= (int)questTable.size()) questTable.resize(id + 1);
-			if (questTable[id].exists) { error = where + "ID " + to_string(id) + "번이 중복되었습니다."; return false; }
-			questTable[id] = d;
+			if (!PutRow(questTable, row, d, error)) return false;
 		}
 		return true;     // 퀘스트는 0개여도 됨 (촌장이 할 말이 없을 뿐)
 	}
@@ -222,18 +213,16 @@ namespace {
 
 // ===== 공개 함수 =====
 bool LoadGameData(string& error) {
-	return LoadItems("items.csv", error) && LoadEnemies("monsters.csv", error) && LoadQuests("quests.csv", error);
+	// 읽는 순서 중요: 몬스터는 아이템을, 퀘스트는 몬스터와 아이템을 검사한다
+	return LoadItems("items.csv", error)
+		&& LoadEnemies("monsters.csv", error)
+		&& LoadQuests("quests.csv", error);
 }
 
-const ItemData& GetItemData(ITEMLIST id) {
-	static const ItemData EMPTY;            // 없는 ID에 돌려줄 "비어 있음"
-	if (!IsValidItem(id)) return EMPTY;
-	return itemTable[id];
-}
-
-bool IsValidItem(ITEMLIST id) {
-	return id > 0 && id < (int)itemTable.size() && itemTable[id].exists;
-}
+const ItemData& GetItemData(ITEMLIST id) { return Find(itemTable, id); }
+bool IsValidItem(ITEMLIST id) { return Find(itemTable, id).exists; }
+const EnemyData& GetEnemyData(int id) { return Find(enemyTable, id); }
+const QuestData& GetQuestData(int id) { return Find(questTable, id); }
 
 vector<ITEMLIST> GetShopItems() {
 	vector<ITEMLIST> list;
@@ -242,23 +231,11 @@ vector<ITEMLIST> GetShopItems() {
 	return list;
 }
 
-const EnemyData& GetEnemyData(int id) {
-	static const EnemyData EMPTY;
-	if (id <= 0 || id >= (int)enemyTable.size() || !enemyTable[id].exists) return EMPTY;
-	return enemyTable[id];
-}
-
 vector<int> GetEnemyIds() {
 	vector<int> list;
 	for (int id = 1; id < (int)enemyTable.size(); ++id)
 		if (enemyTable[id].exists) list.push_back(id);
 	return list;
-}
-
-const QuestData& GetQuestData(int id) {
-	static const QuestData EMPTY;
-	if (id <= 0 || id >= (int)questTable.size() || !questTable[id].exists) return EMPTY;
-	return questTable[id];
 }
 
 int GetNextQuestId(int lastDone) {

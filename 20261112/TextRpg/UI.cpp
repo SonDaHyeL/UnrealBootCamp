@@ -7,6 +7,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Quest.h"
+#include "Sound.h"
 using namespace std;
 
 namespace {
@@ -259,19 +260,22 @@ namespace {
 
 	Key ReadKey() {
 		int ch = _getch();
-		if (ch == 0 || ch == 224) {// 방향키 같은 특수키는 코드가 두 개! 224 다음에 진짜 코드
-			switch (_getch())
-			{
-			case 72: return Key::UP;
-			case 80: return Key::DOWN;
-			case 75: return Key::LEFT;
-			case 77: return Key::RIGHT;
+		if (ch == 0 || ch == 224) {          // 방향키: 코드가 두 개
+			Key key = Key::NONE;
+			switch (_getch()) {
+			case 72: key = Key::UP;    break;
+			case 80: key = Key::DOWN;  break;
+			case 75: key = Key::LEFT;  break;
+			case 77: key = Key::RIGHT; break;
 			}
-			return Key::NONE;
+			if (key != Key::NONE) Sound::PlaySfx("Sfx Title Interface.mp3");   // 방향키 소리
+			return key;
 		}
-
-		if (ch == '\r') return Key::ENTER;
-		if (ch == '\b') return Key::BACK;
+		if (ch == '\r') {                    // Enter
+			Sound::PlaySfx("Sfx Select.mp3");
+			return Key::ENTER;
+		}
+		if (ch == '\b') return Key::BACK;    // Backspace
 		return Key::NONE;
 	}
 

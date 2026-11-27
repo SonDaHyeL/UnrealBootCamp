@@ -1,6 +1,5 @@
 ﻿#include "UI.h"
 #include "Player.h"
-#include <iostream>
 using namespace std;
 
 
@@ -46,11 +45,10 @@ void DropItemAt(Player& player, int idx) {
 	player.GetInven().Remove(idx);
 }
 
-int DropItem(Player& player) {
+void DropItem(Player& player) {
 	int idx = SelectInvenSlot(player);
-	if (idx == -1) { return 0; }
+	if (idx == -1) { return; }
 	DropItemAt(player, idx);
-	return 1;
 }
 
 // ::인벤토리:: 아이템 사용
@@ -96,11 +94,10 @@ int BuyItem(Player& player, ITEMLIST ItemID) { // -1 골드 부족 | 0 인벤토
 	return 1;
 }
 
-int SellItem(Player& player, int idx) {
-	idx -= 1;
+void SellItem(Player& player, int idx) {
 	if (player.GetInven().IsEmptyAt(idx)) {
 		UI::Log(" >> 해당 칸은 판매할 수 없습니다!");
-		return -1;
+		return;
 	}
 
 	const ITEM& item = player.GetInven().Get(idx);
@@ -108,7 +105,6 @@ int SellItem(Player& player, int idx) {
 	UI::Log(string(item.GetName()) + "을/를 판매해 " + to_string(price) + "골드를 얻었습니다!");
 	player.AddGold(price);
 	player.GetInven().Remove(idx);
-	return 1;
 }
 
 //아이템 효과/정보 출력

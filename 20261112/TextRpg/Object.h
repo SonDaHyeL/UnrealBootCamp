@@ -6,7 +6,7 @@
 
 class Player;
 const int INVEN_SIZE = 8;
-const int ACCESSORY_COUNT = 3;
+
 
 using ITEMLIST = int;
 const ITEMLIST noItem = 0;
@@ -87,11 +87,11 @@ std::string GetItemInfo(const ITEM& item); //아이템 효과 출력
 
 //인벤토리 추가 삭제
 void GetItem(Player& player, ITEMLIST ItemID);
-int DropItem(Player& player);
+void DropItem(Player& player);
 
 //상점 구매 판매
 int BuyItem(Player& player, ITEMLIST ItemID);
-int SellItem(Player& player, int idx);
+void SellItem(Player& player, int idx);
 
 //아이템 사용
 bool UseItem(Player& player, int idx);
